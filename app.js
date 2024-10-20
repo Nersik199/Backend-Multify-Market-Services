@@ -4,11 +4,20 @@ import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
+import cors from 'cors';
 
 import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
 
 const app = express();
+
+const corsOptions = {
+	origin: 'https://world-of-construction.onrender.com',
+	methods: 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+	allowedHeaders: 'Content-Type, Authorization',
+};
+
+app.use(cors(corsOptions));
 
 // view engine setup
 app.set('views', path.join(path.resolve(), 'views'));
