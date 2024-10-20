@@ -28,7 +28,9 @@ export default {
 			});
 
 			if (!storeCreate) {
-				await cloudinary.uploader.destroy(file.filename);
+				if (file && file.public_id) {
+					await cloudinary.uploader.destroy(file.public_id);
+				}
 				return res.status(500).json({
 					message: 'Error creating store',
 				});
@@ -68,7 +70,6 @@ export default {
 			const { files = null } = req;
 			const { name, size, price, description, category } = req.body;
 			const { id } = req.user;
-			console.log(req.body);
 
 			const user = await Users.findByPk(id);
 			if (!user) {
@@ -101,7 +102,7 @@ export default {
 				size,
 				price,
 				description,
-				category,
+				category: categoryRecord.id,
 				storeId: store.id,
 			});
 
@@ -146,6 +147,83 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error creating product',
+			});
+		}
+	},
+
+	getCategories: async (req, res) => {
+		try {
+			const categories = await Categories.findAll();
+			res.status(200).json({
+				categories,
+				message: 'Categories fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching categories',
+			});
+		}
+	},
+
+	getProducts: async (req, res) => {
+		try {
+			const { categoryId } = req.params;
+			const { id } = req.user;
+			const { limit = 10, page = 1 } = req.query;
+
+			const offset = (page - 1) * limit;
+
+			if (!id) {
+				res.status(400).json({
+					message: 'Category ID is required',
+				});
+				return;
+			}
+
+			const user = await Users.findByPk(id);
+
+			const products = await ProductCategories.findAll({
+				where: { categoryId },
+				attributes: ['productId', 'categoryId'],
+				include: [
+					{
+						model: Products,
+						include: [
+							{
+								model: Stores,
+								attributes: ['name'],
+								where: { ownerId: user.id },
+							},
+							{
+								model: Photo,
+								as: 'productImage',
+								attributes: ['path'],
+							},
+						],
+					},
+				],
+				order: [['id', 'DESC']],
+				limit: +limit,
+				offset: +offset,
+			});
+
+			if (!products) {
+				res.status(404).json({
+					message: 'Products not found',
+				});
+				return;
+			}
+
+			res.status(200).json({
+				products,
+				default: `page=${page} limit=${limit}`,
+				message: 'Products fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching products',
 			});
 		}
 	},

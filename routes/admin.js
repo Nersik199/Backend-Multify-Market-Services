@@ -24,4 +24,6 @@ router.post(
 	controllers.createProduct
 );
 
+router.get('/categories', checkToken, controllers.getCategories);
+router.get('/products/:categoryId', checkToken, controllers.getProducts);
 export default router;

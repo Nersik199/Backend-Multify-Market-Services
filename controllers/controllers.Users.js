@@ -10,7 +10,7 @@ export default {
 	async registration(req, res) {
 		try {
 			const { firstName, lastName, email, phone, password } = req.body;
-			const { file } = req;
+			const { file = null } = req;
 			const mailExists = await Users.findOne({
 				where: { email },
 			});
