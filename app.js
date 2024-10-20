@@ -12,7 +12,7 @@ import usersRouter from './routes/users.js';
 const app = express();
 
 const corsOptions = {
-	origin: 'https://world-of-construction.onrender.com',
+	origin: '*',
 	methods: 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
 	allowedHeaders: 'Content-Type, Authorization',
 };
