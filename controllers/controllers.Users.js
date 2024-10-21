@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
+import Stores from '../models/Stores.js';
 
 import { sendMail } from '../services/Mail.js';
 

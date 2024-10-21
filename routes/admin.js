@@ -17,7 +17,7 @@ router.post(
 	controllers.createStore
 );
 router.post(
-	'/product',
+	'/product/:categoryId',
 	checkToken,
 	uploadFile('Product').array('productImage', 5),
 	validate(adminSchema.createProduct, 'body'),
@@ -26,4 +26,15 @@ router.post(
 
 router.get('/categories', checkToken, controllers.getCategories);
 router.get('/products/:categoryId', checkToken, controllers.getProducts);
+
+router.put(
+	'/product/:productId',
+	checkToken,
+	uploadFile('Product').array('productImage', 5),
+	validate(adminSchema.updateProduct, 'body'),
+	controllers.updateProduct
+);
+
+router.delete('/product/:productId', checkToken, controllers.deleteProduct);
+
 export default router;

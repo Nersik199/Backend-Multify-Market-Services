@@ -17,4 +17,12 @@ export default {
 		description: Joi.string().required(),
 		category: Joi.string().required(),
 	}),
+
+	updateProduct: Joi.object({
+		name: Joi.string().required(),
+		size: Joi.string().required(),
+		price: Joi.number().required().positive(),
+		description: Joi.string().required(),
+		category: Joi.string().required(),
+	}),
 };
