@@ -23,12 +23,6 @@ Stores.init(
 	},
 	{
 		sequelize,
-		indexes: [
-			{
-				unique: true,
-				fields: ['name'],
-			},
-		],
 		modelName: 'store',
 		tableName: 'stores',
 		timestamps: true,
