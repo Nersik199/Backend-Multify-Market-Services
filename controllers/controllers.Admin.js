@@ -22,15 +22,6 @@ export default {
 				});
 			}
 
-			const stores = await Stores.findOne({
-				where: { ownerId: user.id },
-			});
-			if (stores) {
-				return res.status(409).json({
-					message: 'Store already exists',
-				});
-			}
-
 			const storeCreate = await Stores.create({
 				name,
 				location,
@@ -251,6 +242,52 @@ export default {
 			res.status(200).json({
 				products: filteredProducts,
 				default: `page=${page} limit=${limit}`,
+				message: 'Products fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching products',
+			});
+		}
+	},
+
+	getAllProducts: async (req, res) => {
+		try {
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to get all products',
+				});
+			}
+
+			const store = await Stores.findOne({ where: { ownerId: id } });
+
+			const products = await Products.findAll({
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path'],
+					},
+					{
+						model: Stores,
+						attributes: ['name'],
+						where: { name: store.name },
+					},
+				],
+			});
+			if (!products) {
+				res.status(404).json({
+					message: 'Products not found',
+				});
+				return;
+			}
+
+			res.status(200).json({
+				products,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {

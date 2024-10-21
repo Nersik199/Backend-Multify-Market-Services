@@ -16,6 +16,8 @@ router.post(
 	validate(adminSchema.createStore, 'body'),
 	controllers.createStore
 );
+router.get('/categories', checkToken, controllers.getCategories);
+
 router.post(
 	'/product/:categoryId',
 	checkToken,
@@ -24,7 +26,7 @@ router.post(
 	controllers.createProduct
 );
 
-router.get('/categories', checkToken, controllers.getCategories);
+router.get('/products', checkToken, controllers.getAllProducts);
 router.get('/products/:categoryId', checkToken, controllers.getProducts);
 
 router.put(
