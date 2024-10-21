@@ -10,7 +10,9 @@ export default (schemas, target) => {
 				await cloudinary.uploader.destroy(req.file.filename);
 			}
 			if (req.files) {
-				req.files.forEach(file => fs.unlink(file.path));
+				req.files.forEach(
+					async file => await cloudinary.uploader.destroy(file.filename)
+				);
 			}
 			const fields = {};
 			error.details.forEach(detail => {

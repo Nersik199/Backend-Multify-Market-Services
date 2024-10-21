@@ -16,11 +16,21 @@ export default {
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
-			if (!user) {
-				return res.status(404).json({
-					message: 'User not found',
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to create a store',
 				});
 			}
+
+			const stores = await Stores.findOne({
+				where: { ownerId: user.id },
+			});
+			if (stores) {
+				return res.status(409).json({
+					message: 'Store already exists',
+				});
+			}
+
 			const storeCreate = await Stores.create({
 				name,
 				location,
@@ -65,16 +75,35 @@ export default {
 		}
 	},
 
+	getCategories: async (req, res) => {
+		try {
+			const categories = await Categories.findAll({
+				attributes: ['id', 'name'],
+				order: [['name', 'ASC']],
+			});
+			res.status(200).json({
+				categories,
+				message: 'Categories fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching categories',
+			});
+		}
+	},
+
 	createProduct: async (req, res) => {
 		try {
 			const { files = null } = req;
+			const { categoryId } = req.params;
 			const { name, size, price, description, category } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
-			if (!user) {
-				return res.status(404).json({
-					message: 'User not found',
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to create a product',
 				});
 			}
 
@@ -88,7 +117,7 @@ export default {
 			}
 
 			const categoryRecord = await Categories.findOne({
-				where: { name: category },
+				where: { id: categoryId },
 			});
 
 			if (!categoryRecord) {
@@ -102,7 +131,7 @@ export default {
 				size,
 				price,
 				description,
-				category: categoryRecord.id,
+				category,
 				storeId: store.id,
 			});
 
@@ -151,21 +180,6 @@ export default {
 		}
 	},
 
-	getCategories: async (req, res) => {
-		try {
-			const categories = await Categories.findAll();
-			res.status(200).json({
-				categories,
-				message: 'Categories fetched successfully',
-			});
-		} catch (error) {
-			console.log(error);
-			res.status(500).json({
-				message: 'Error fetching categories',
-			});
-		}
-	},
-
 	getProducts: async (req, res) => {
 		try {
 			const { categoryId } = req.params;
@@ -174,14 +188,20 @@ export default {
 
 			const offset = (page - 1) * limit;
 
-			if (!id) {
+			if (!categoryId) {
 				res.status(400).json({
 					message: 'Category ID is required',
 				});
 				return;
 			}
+			const store = await Stores.findOne({ where: { ownerId: id } });
 
-			const user = await Users.findByPk(id);
+			if (!store) {
+				res.status(404).json({
+					message: 'Store not found',
+				});
+				return;
+			}
 
 			const products = await ProductCategories.findAll({
 				where: { categoryId },
@@ -193,7 +213,7 @@ export default {
 							{
 								model: Stores,
 								attributes: ['name'],
-								where: { ownerId: user.id },
+								where: { name: store.name },
 							},
 							{
 								model: Photo,
@@ -208,15 +228,28 @@ export default {
 				offset: +offset,
 			});
 
-			if (!products) {
+			if (!products.length === 0) {
 				res.status(404).json({
 					message: 'Products not found',
 				});
 				return;
 			}
 
+			const filteredProducts = products
+				.map(item => {
+					if (item.product !== null) {
+						return {
+							productId: item.productId,
+							categoryId: item.categoryId,
+							product: item.product,
+						};
+					}
+					return null;
+				})
+				.filter(item => item !== null);
+
 			res.status(200).json({
-				products,
+				products: filteredProducts,
 				default: `page=${page} limit=${limit}`,
 				message: 'Products fetched successfully',
 			});
@@ -224,6 +257,95 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error fetching products',
+			});
+		}
+	},
+
+	updateProduct: async (req, res) => {
+		try {
+			const { productId } = req.params;
+			const { name, size, price, description, category } = req.body;
+			const { id } = req.user;
+			const { files = null } = req.files;
+			const product = await Products.findOne({ where: { id: productId } });
+			if (!product) {
+				res.status(404).json({
+					message: 'Product not found',
+				});
+				return;
+			}
+
+			const user = await Users.findByPk(id);
+
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to update this product',
+				});
+			}
+
+			if (files) {
+				for (const file of files) {
+					await Photo.create({
+						productId: product.id,
+						path: file.path,
+					});
+				}
+			}
+
+			await product.update({
+				name,
+				size,
+				price,
+				description,
+				category,
+			});
+			res.status(200).json({
+				message: 'Product updated successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error updating product',
+			});
+		}
+	},
+
+	deleteProduct: async (req, res) => {
+		try {
+			const { productId } = req.params;
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to update this product',
+				});
+			}
+			const store = await Stores.findOne({ where: { ownerId: user.id } });
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			const product = await Products.findOne({ where: { id: productId } });
+
+			if (!product) {
+				return res.status(404).json({
+					message: 'Product not found',
+				});
+			}
+
+			await ProductCategories.destroy({ where: { productId: product.id } });
+			await Products.destroy({ where: { id: product.id } });
+
+			res.status(200).json({
+				message: 'Product deleted successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error deleting product',
 			});
 		}
 	},
