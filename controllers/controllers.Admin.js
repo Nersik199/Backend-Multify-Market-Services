@@ -255,6 +255,9 @@ export default {
 	getAllProducts: async (req, res) => {
 		try {
 			const { id } = req.user;
+			const { limit = 10, page = 1 } = req.query;
+
+			const offset = (page - 1) * limit;
 
 			const user = await Users.findByPk(id);
 			if (user.role !== 'admin') {
@@ -278,6 +281,9 @@ export default {
 						where: { name: store.name },
 					},
 				],
+				limit: +limit,
+				offset: +offset,
+				order: [['id', 'DESC']],
 			});
 			if (!products) {
 				res.status(404).json({
@@ -288,6 +294,7 @@ export default {
 
 			res.status(200).json({
 				products,
+				default: `page=${page} limit=${limit}`,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {
