@@ -32,10 +32,12 @@ export default {
 				password: password,
 			});
 
-			await Photo.create({
-				userId: user.id,
-				path: file.path,
-			});
+			if (file) {
+				await Photo.create({
+					path: file.path,
+					userId: user.id,
+				});
+			}
 
 			const result = await Users.findByPk(user.id, {
 				include: [
@@ -61,7 +63,6 @@ export default {
 				template: 'sendEmailCode',
 				templateData: {
 					title: `hi ${user.firstName} ${user.lastName}`,
-					avatar: result.avatar[0].path,
 					link: `http://localhost:3000/users/activate?key=${activationKey}`,
 				},
 			});
