@@ -88,7 +88,7 @@ export default {
 		try {
 			const { files = null } = req;
 			const { categoryId } = req.params;
-			const { name, size, price, description, category } = req.body;
+			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -122,7 +122,7 @@ export default {
 				size,
 				price,
 				description,
-				category,
+				brandName,
 				storeId: store.id,
 			});
 
@@ -308,7 +308,7 @@ export default {
 	updateProduct: async (req, res) => {
 		try {
 			const { productId } = req.params;
-			const { name, size, price, description, category } = req.body;
+			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
 			const { files = null } = req.files;
 			const product = await Products.findOne({ where: { id: productId } });
@@ -329,21 +329,23 @@ export default {
 
 			if (files) {
 				for (const file of files) {
-					await Photo.create({
-						productId: product.id,
+					await Photo.update({
+						where: { productId: product.id },
 						path: file.path,
 					});
 				}
 			}
 
-			await product.update({
+			const productUpdate = await product.update({
 				name,
 				size,
 				price,
 				description,
-				category,
+				brandName,
 			});
+
 			res.status(200).json({
+				productUpdate,
 				message: 'Product updated successfully',
 			});
 		} catch (error) {
