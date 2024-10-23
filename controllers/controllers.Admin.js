@@ -8,6 +8,9 @@ import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
 
+// utils
+import updateImages from '../utils/updateImages.js';
+
 export default {
 	createStore: async (req, res) => {
 		try {
@@ -88,7 +91,7 @@ export default {
 		try {
 			const { files = null } = req;
 			const { categoryId } = req.params;
-			const { name, size, price, description, category } = req.body;
+			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -122,7 +125,7 @@ export default {
 				size,
 				price,
 				description,
-				category,
+				brandName,
 				storeId: store.id,
 			});
 
@@ -209,7 +212,7 @@ export default {
 							{
 								model: Photo,
 								as: 'productImage',
-								attributes: ['path'],
+								attributes: ['path', 'id'],
 							},
 						],
 					},
@@ -273,7 +276,7 @@ export default {
 					{
 						model: Photo,
 						as: 'productImage',
-						attributes: ['path'],
+						attributes: ['path', 'id'],
 					},
 					{
 						model: Stores,
@@ -308,10 +311,28 @@ export default {
 	updateProduct: async (req, res) => {
 		try {
 			const { productId } = req.params;
-			const { name, size, price, description, category } = req.body;
+			const {
+				name,
+				size,
+				price,
+				description,
+				brandName,
+				imageId = null,
+			} = req.body;
 			const { id } = req.user;
-			const { files = null } = req.files;
-			const product = await Products.findOne({ where: { id: productId } });
+			const { files = null } = req;
+
+			const product = await Products.findOne({
+				where: { id: productId },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path', 'id'],
+					},
+				],
+			});
+
 			if (!product) {
 				res.status(404).json({
 					message: 'Product not found',
@@ -327,23 +348,29 @@ export default {
 				});
 			}
 
-			if (files) {
+			if (files && !imageId) {
 				for (const file of files) {
 					await Photo.create({
-						productId: product.id,
 						path: file.path,
+						productId: productId,
 					});
 				}
 			}
 
-			await product.update({
+			if (imageId && files) {
+				await updateImages(res, 'Product', files, imageId);
+			}
+
+			const productUpdate = await product.update({
 				name,
 				size,
 				price,
 				description,
-				category,
+				brandName,
 			});
+
 			res.status(200).json({
+				productUpdate,
 				message: 'Product updated successfully',
 			});
 		} catch (error) {
@@ -390,6 +417,53 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error deleting product',
+			});
+		}
+	},
+
+	delateImage: async (req, res) => {
+		try {
+			const { imageId } = req.params;
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to update this product',
+				});
+			}
+			const store = await Stores.findOne({ where: { ownerId: user.id } });
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			const image = await Photo.findOne({ where: { id: imageId } });
+
+			if (!image) {
+				return res.status(404).json({
+					message: 'Image not found',
+				});
+			}
+
+			const fileName = `Product/${image.path
+				.split('/')[1]
+				.pop()
+				.split('.')
+				.slice(0, -1)
+				.join('.')}`;
+			await cloudinary.uploader.destroy(fileName);
+
+			await Photo.destroy({ where: { id: imageId } });
+
+			res.status(200).json({
+				message: 'Image deleted successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error deleting image',
 			});
 		}
 	},

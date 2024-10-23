@@ -15,14 +15,15 @@ export default {
 		size: Joi.string().required(),
 		price: Joi.number().required().positive(),
 		description: Joi.string().required(),
-		category: Joi.string().required(),
+		brandName: Joi.string().required(),
 	}),
 
 	updateProduct: Joi.object({
+		imgId: Joi.string().optional(),
 		name: Joi.string().required(),
 		size: Joi.string().required(),
 		price: Joi.number().required().positive(),
 		description: Joi.string().required(),
-		category: Joi.string().required(),
+		brandName: Joi.string().required(),
 	}),
 };
