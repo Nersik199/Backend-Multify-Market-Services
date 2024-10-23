@@ -38,5 +38,5 @@ router.put(
 );
 
 router.delete('/product/:productId', checkToken, controllers.deleteProduct);
-
+router.delete('/image/:imageId', checkToken, controllers.delateImage);
 export default router;
