@@ -16,6 +16,7 @@ export default {
 		price: Joi.number().required().positive(),
 		description: Joi.string().required(),
 		brandName: Joi.string().required(),
+		productImage: Joi.string().optional(),
 	}),
 
 	updateProduct: Joi.object({
