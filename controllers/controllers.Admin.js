@@ -448,11 +448,12 @@ export default {
 			}
 
 			const fileName = `Product/${image.path
-				.split('/')[1]
+				.split('/')
 				.pop()
 				.split('.')
 				.slice(0, -1)
 				.join('.')}`;
+
 			await cloudinary.uploader.destroy(fileName);
 
 			await Photo.destroy({ where: { id: imageId } });
