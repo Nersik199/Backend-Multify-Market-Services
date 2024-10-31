@@ -89,7 +89,7 @@ export default {
 
 	createProduct: async (req, res) => {
 		try {
-			const { files = null } = req;
+			const { files = null || [] } = req;
 			const { categoryId } = req.params;
 			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
