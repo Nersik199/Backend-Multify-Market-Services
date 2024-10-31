@@ -89,7 +89,7 @@ export default {
 
 	createProduct: async (req, res) => {
 		try {
-			const { files = null } = req;
+			const { files = null || [] } = req;
 			const { categoryId } = req.params;
 			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
@@ -448,11 +448,12 @@ export default {
 			}
 
 			const fileName = `Product/${image.path
-				.split('/')[1]
+				.split('/')
 				.pop()
 				.split('.')
 				.slice(0, -1)
 				.join('.')}`;
+
 			await cloudinary.uploader.destroy(fileName);
 
 			await Photo.destroy({ where: { id: imageId } });
