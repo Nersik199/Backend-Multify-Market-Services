@@ -89,7 +89,7 @@ export default {
 
 	createProduct: async (req, res) => {
 		try {
-			const { files = null || [] } = req;
+			const { files = [] } = req;
 			const { categoryId } = req.params;
 			const { name, size, price, description, brandName } = req.body;
 			const { id } = req.user;
@@ -143,7 +143,7 @@ export default {
 				});
 			}
 
-			if (files) {
+			if (files.length > 0) {
 				for (const file of files) {
 					await Photo.create({
 						productId: productCreate.id,
