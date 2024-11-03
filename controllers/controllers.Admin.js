@@ -7,68 +7,12 @@ import Stores from '../models/Stores.js';
 import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
+import StoreAdmin from '../models/StoreAdmin.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
 
 export default {
-	createStore: async (req, res) => {
-		try {
-			const { file = null } = req;
-			const { name, location } = req.body;
-			const { id } = req.user;
-
-			const user = await Users.findByPk(id);
-			if (user.role !== 'admin') {
-				return res.status(401).json({
-					message: 'You are not authorized to create a store',
-				});
-			}
-
-			const storeCreate = await Stores.create({
-				name,
-				location,
-				ownerId: user.id,
-			});
-
-			if (!storeCreate) {
-				if (file && file.public_id) {
-					await cloudinary.uploader.destroy(file.public_id);
-				}
-				return res.status(500).json({
-					message: 'Error creating store',
-				});
-			}
-
-			if (file) {
-				await Photo.create({
-					storeId: storeCreate.id,
-					path: file.path,
-				});
-			}
-
-			const store = await Stores.findByPk(storeCreate.id, {
-				include: [
-					{
-						model: Photo,
-						as: 'storeLogo',
-						attributes: ['path'],
-					},
-				],
-			});
-
-			res.status(201).json({
-				store,
-				message: 'Store created successfully',
-			});
-		} catch (error) {
-			console.log(error);
-			res.status(500).json({
-				message: 'Error creating store',
-			});
-		}
-	},
-
 	getCategories: async (req, res) => {
 		try {
 			const categories = await Categories.findAll({
@@ -101,8 +45,8 @@ export default {
 				});
 			}
 
-			const store = await Stores.findOne({
-				where: { ownerId: user.id },
+			const store = await StoreAdmin.findOne({
+				where: { userId: user.id },
 			});
 			if (!store) {
 				return res.status(404).json({
@@ -126,7 +70,7 @@ export default {
 				price,
 				description,
 				brandName,
-				storeId: store.id,
+				storeId: store.storeId,
 			});
 
 			await ProductCategories.create({
@@ -188,7 +132,7 @@ export default {
 				});
 				return;
 			}
-			const store = await Stores.findOne({ where: { ownerId: id } });
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
 
 			if (!store) {
 				res.status(404).json({
@@ -207,7 +151,7 @@ export default {
 							{
 								model: Stores,
 								attributes: ['name'],
-								where: { name: store.name },
+								where: { id: store.storeId },
 							},
 							{
 								model: Photo,
@@ -269,7 +213,14 @@ export default {
 				});
 			}
 
-			const store = await Stores.findOne({ where: { ownerId: id } });
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
+
+			if (!store) {
+				res.status(404).json({
+					message: 'Store not found',
+				});
+				return;
+			}
 
 			const products = await Products.findAll({
 				include: [
@@ -281,7 +232,7 @@ export default {
 					{
 						model: Stores,
 						attributes: ['name'],
-						where: { name: store.name },
+						where: { id: store.storeId },
 					},
 				],
 				limit: +limit,
@@ -392,7 +343,7 @@ export default {
 					message: 'You are not authorized to update this product',
 				});
 			}
-			const store = await Stores.findOne({ where: { ownerId: user.id } });
+			const store = await StoreAdmin.findOne({ where: { userId: user.id } });
 			if (!store) {
 				return res.status(404).json({
 					message: 'Store not found',
@@ -432,7 +383,7 @@ export default {
 					message: 'You are not authorized to update this product',
 				});
 			}
-			const store = await Stores.findOne({ where: { ownerId: user.id } });
+			const store = await StoreAdmin.findOne({ where: { userId: user.id } });
 			if (!store) {
 				return res.status(404).json({
 					message: 'Store not found',

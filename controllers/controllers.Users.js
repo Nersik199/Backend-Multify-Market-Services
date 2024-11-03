@@ -3,14 +3,13 @@ import { v4 as uuid } from 'uuid';
 
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
-import Stores from '../models/Stores.js';
 
 import { sendMail } from '../services/Mail.js';
 
 export default {
 	async registration(req, res) {
 		try {
-			const { firstName, lastName, email, phone, password } = req.body;
+			const { firstName, lastName, email, password } = req.body;
 			const { file = null } = req;
 			const mailExists = await Users.findOne({
 				where: { email },
@@ -27,7 +26,6 @@ export default {
 			const user = await Users.create({
 				firstName,
 				lastName,
-				phone,
 				email: email.toLowerCase(),
 				password: password,
 			});
@@ -151,10 +149,20 @@ export default {
 				return;
 			}
 
+			if (user.role === 'superAdmin') {
+				res.status(200).json({
+					message: 'Login successful',
+					token,
+					superAdmin: true,
+				});
+				return;
+			}
+
 			res.status(200).json({
 				message: 'Login successful',
 				token,
 				isAdmin: false,
+				superAdmin: false,
 			});
 		} catch (error) {
 			console.log(error);
