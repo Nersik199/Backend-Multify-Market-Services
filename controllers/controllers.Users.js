@@ -9,7 +9,7 @@ import { sendMail } from '../services/Mail.js';
 export default {
 	async registration(req, res) {
 		try {
-			const { firstName, lastName, email, phone, password } = req.body;
+			const { firstName, lastName, email, password } = req.body;
 			const { file = null } = req;
 			const mailExists = await Users.findOne({
 				where: { email },
@@ -26,7 +26,6 @@ export default {
 			const user = await Users.create({
 				firstName,
 				lastName,
-				phone,
 				email: email.toLowerCase(),
 				password: password,
 			});
