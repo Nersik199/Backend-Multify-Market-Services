@@ -5,10 +5,13 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './swagger-output.json' assert { type: 'json' };
+// Swagger setup
 
+//router
 import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
-
 const app = express();
 
 const corsOptions = {
@@ -32,6 +35,15 @@ app.use(express.static(path.join(path.resolve(), 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
+const options = {
+	explorer: true,
+};
+
+app.use(
+	'/api-docs',
+	swaggerUi.serve,
+	swaggerUi.setup(swaggerDocument, options)
+);
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
 	next(createError(404));

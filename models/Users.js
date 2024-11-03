@@ -45,12 +45,9 @@ Users.init(
 			type: DataTypes.STRING(255),
 			allowNull: false,
 		},
-		phone: {
-			type: DataTypes.STRING(255),
-			allowNull: true,
-		},
+
 		role: {
-			type: DataTypes.ENUM('admin', 'storeOwner', 'user'),
+			type: DataTypes.ENUM('admin', 'superAdmin', 'user'),
 			allowNull: false,
 			defaultValue: 'user',
 		},

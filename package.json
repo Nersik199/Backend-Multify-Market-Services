@@ -4,8 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "nodemon ./bin/www",
-		"start": "node ./bin/www"
+		"dev": " nodemon ./bin/www ",
+		"start": "node ./bin/www",
+		"swg": "node swagger.js"
 	},
 	"devDependencies": {
 		"nodemon": "^3.1.7"
@@ -28,6 +29,9 @@
 		"mysql2": "^3.11.3",
 		"nodemailer": "^6.9.15",
 		"sequelize": "^6.37.4",
+		"swagger-autogen": "^2.23.7",
+		"swagger-jsdoc": "^6.2.8",
+		"swagger-ui-express": "^5.0.1",
 		"uuid": "^10.0.0"
 	}
 }
