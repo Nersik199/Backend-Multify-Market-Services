@@ -151,9 +151,6 @@
                 "email": {
                   "example": "any"
                 },
-                "phone": {
-                  "example": "any"
-                },
                 "password": {
                   "example": "any"
                 }

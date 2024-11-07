@@ -1,4 +1,3 @@
-
 import 'dotenv/config.js';
 import app from '../app.js';
 import debugLib from 'debug';
