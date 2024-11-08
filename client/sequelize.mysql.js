@@ -4,7 +4,13 @@ import { readFile } from 'fs/promises';
 
 dotenv.config();
 
-const { DB_HOST, DB_DATABASE, DB_USER, DB_PASSWORD, DB_PORT, DB_KEY } =
+const { 
+	DB_HOST,
+	DB_DATABASE,
+	DB_USER,
+	DB_PASSWORD,
+	DB_PORT,
+	DB_KEY } =
 	process.env;
 
 const dbConfig = {
