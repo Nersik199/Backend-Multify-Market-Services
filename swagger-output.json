@@ -151,10 +151,13 @@
                 "email": {
                   "example": "any"
                 },
-                "phone": {
+                "password": {
                   "example": "any"
                 },
-                "password": {
+                "gender": {
+                  "example": "any"
+                },
+                "dateOfBirth": {
                   "example": "any"
                 }
               }
