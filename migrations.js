@@ -5,6 +5,7 @@ import Categories from './models/Categories.js';
 import ProductCategories from './models/ProductCategories.js';
 import Photo from './models/Photo.js';
 import StoreAdmin from './models/StoreAdmin.js';
+import Cards from './models/Cards.js';
 
 const models = [
 	Users,
@@ -14,6 +15,7 @@ const models = [
 	Categories,
 	ProductCategories,
 	Photo,
+	Cards
 ];
 
 (async () => {
