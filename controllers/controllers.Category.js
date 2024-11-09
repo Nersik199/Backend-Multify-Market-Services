@@ -6,12 +6,6 @@ export default {
         try {
             const userId = req.user.id;
 
-            if (!userId) {
-                return res.status(401).json({
-                    message: 'Unauthorized: User is not authenticated',
-                });
-            }
-
             const user = await Users.findByPk(userId);
             if (!user) {
                 return res.status(404).send({
@@ -22,7 +16,6 @@ export default {
             const categories = await Category.findAll()
             return res.status(200).json({
                 categories,
-
             });
         }catch(err) {
             console.error('Error in getAllCategories:', err);
