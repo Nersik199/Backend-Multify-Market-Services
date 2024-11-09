@@ -31,6 +31,15 @@ Users.init(
 			type: DataTypes.STRING(255),
 			allowNull: false,
 		},
+		gender: {
+			type: DataTypes.STRING,
+			enum: ['male', 'female'],
+			defaultValue: 'male',
+		},
+		dateOfBirth: {
+			type: DataTypes.DATE,
+			defaultValue: null,
+		},
 		password: {
 			type: DataTypes.STRING(255),
 			allowNull: false,
@@ -45,7 +54,6 @@ Users.init(
 			type: DataTypes.STRING(255),
 			allowNull: false,
 		},
-
 		role: {
 			type: DataTypes.ENUM('admin', 'superAdmin', 'user'),
 			allowNull: false,
