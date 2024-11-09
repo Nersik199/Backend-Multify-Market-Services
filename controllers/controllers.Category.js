@@ -7,11 +7,6 @@ export default {
             const userId = req.user.id;
 
             const user = await Users.findByPk(userId);
-            if (!user) {
-                return res.status(404).send({
-                    message: 'User not found',
-                })
-            }
 
             const categories = await Category.findAll()
             return res.status(200).json({
