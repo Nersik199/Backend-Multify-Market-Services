@@ -23,9 +23,9 @@
 ![Swagger-ui-express](https://img.shields.io/badge/Swagger--ui--express-v5.0.1-lightgrey)
 ![UUID](https://img.shields.io/badge/UUID-v10.0.0-blue)
 
-<div align="center">
+<p align="center" >
   <img src="https://res.cloudinary.com/dutkekrpd/image/upload/v1731158665/gif/hi5nj1qopwt2xytn895n.gif" width="500" height="auto" style="border-radius: 12px;" />
-</div>
+</p>
 
 **World of Construction** — это универсальная онлайн-платформа, созданная для связи строительных магазинов с клиентами, подрядчиками и строителями. Платформа упрощает поиск строительных материалов, инструментов и услуг, собирая все в одном удобном цифровом пространстве.
 
