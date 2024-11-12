@@ -21,6 +21,8 @@ export default {
 	userUpdate: Joi.object({
 		firstName: Joi.string().min(3).max(50).required(),
 		lastName: Joi.string().min(3).max(50).required(),
+		gender: Joi.string().min(3).max(50).required(),
+		dateOfBirth: Joi.date().required(),
 	}),
 
 	updatePassword: Joi.object({
