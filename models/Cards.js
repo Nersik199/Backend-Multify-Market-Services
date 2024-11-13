@@ -12,23 +12,8 @@ Cards.init(
             primaryKey: true,
             autoIncrement: true,
         },
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        size: {
-            type: DataTypes.STRING,
-        },
-        price: {
-            type: DataTypes.DECIMAL(10, 2),
-            allowNull: false,
-        },
-        description: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        brandName: {
-            type: DataTypes.STRING,
+        productId: {
+            type: DataTypes.BIGINT.UNSIGNED,
             allowNull: false,
         },
         quantity: {
@@ -44,7 +29,7 @@ Cards.init(
     }
 );
 
-Users.hasMany(Stores, {
+Users.hasMany(Cards, {
     foreignKey: 'userId',
     onDelete: 'cascade',
 });

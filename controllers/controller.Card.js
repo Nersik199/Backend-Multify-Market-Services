@@ -4,24 +4,16 @@ export default {
     async create(req, res) {
         try {
             const {
-                name,
-                size,
-                price,
-                description,
-                brandName,
+                productId,
                 quantity
             } = req.body;
 
             const { id } = req.user;
             
             const cards = await Cards.create({
-                name,
-                size,
-                price,
-                description,
-                brandName,
-                quantity,
+                productId,
                 userId: id,
+                quantity
             });
 
             res.status(201).json({

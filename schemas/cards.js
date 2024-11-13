@@ -2,11 +2,7 @@ import Joi from 'joi';
 
 export default {
     create: Joi.object({
-        name: Joi.string().min(1).max(50).required(),
-        size: Joi.string().min(1).max(50).required(),
-        price: Joi.string().min(1).max(50).required(),
-        description: Joi.string().min(1).max(50).required(),
-        brandName: Joi.string().min(1).max(50).required(),
+        productId: Joi.number().integer().positive().required(),
         quantity: Joi.number().integer().positive().required(),
     }),
 
