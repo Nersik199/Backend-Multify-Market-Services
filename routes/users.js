@@ -24,4 +24,12 @@ router.get(
 	validate(userSchema.activeAccount, 'query'),
 	controllers.activeAccount
 );
+
+router.put(
+	'/update',
+	uploadFile('avatar').single('avatar'),
+	validate(userSchema.userUpdate, 'body'),
+	checkToken,
+	controllers.updateProfile
+);
 export default router;
