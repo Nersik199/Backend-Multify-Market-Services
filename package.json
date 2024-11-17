@@ -1,10 +1,10 @@
 {
-	"name": "project",
+	"name": "world-of-construction",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": " nodemon ./bin/www ",
+		"dev": "nodemon ./bin/www ",
 		"start": "node ./bin/www",
 		"swg": "node swagger.js"
 	},
