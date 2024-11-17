@@ -4,21 +4,31 @@ import sequelize from '../client/sequelize.mysql.js';
 import Products from './Products.js';
 import Categories from './Categories.js';
 
-const ProductCategories = sequelize.define('productCategories', {
-	id: {
-		type: DataTypes.BIGINT.UNSIGNED,
-		primaryKey: true,
-		autoIncrement: true,
+class ProductCategories extends Model {}
+
+ProductCategories.init(
+	{
+		id: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			primaryKey: true,
+			autoIncrement: true,
+		},
+		productId: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			allowNull: false,
+		},
+		categoryId: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			allowNull: false,
+		},
 	},
-	productId: {
-		type: DataTypes.BIGINT.UNSIGNED,
-		allowNull: false,
-	},
-	categoryId: {
-		type: DataTypes.BIGINT.UNSIGNED,
-		allowNull: false,
-	},
-});
+	{
+		sequelize,
+		modelName: 'productCategories',
+		tableName: 'productCategories',
+		timestamps: true,
+	}
+);
 
 ProductCategories.belongsTo(Products, {
 	foreignKey: 'productId',

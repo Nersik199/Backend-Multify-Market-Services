@@ -15,8 +15,7 @@ router.use('/admin', admin);
 router.use('/products', products);
 router.use('/categories', categories);
 
-
-router.get('/home', (req, res) => {
+router.get('/', (req, res) => {
 	res.render('index');
 });
 export default router;
