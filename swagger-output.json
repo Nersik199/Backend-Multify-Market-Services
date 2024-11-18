@@ -580,7 +580,7 @@
         }
       }
     },
-    "/admin/products/search": {
+    "/admin/search": {
       "get": {
         "description": "",
         "parameters": [
