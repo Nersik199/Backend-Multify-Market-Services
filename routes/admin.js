@@ -27,7 +27,7 @@ router.put(
 	validate(adminSchema.updateProduct, 'body'),
 	controllers.updateProduct
 );
-router.get('/search', checkToken, controllers.searchStoreProduct);
+router.get('/products/search', checkToken, controllers.searchStoreProduct);
 
 router.delete('/product/:productId', checkToken, controllers.deleteProduct);
 router.delete('/image/:imageId', checkToken, controllers.delateImage);
