@@ -11,7 +11,7 @@
     "https"
   ],
   "paths": {
-    "/home": {
+    "/": {
       "get": {
         "description": "",
         "responses": {
@@ -246,13 +246,20 @@
       }
     },
     "/users/activate": {
-      "get": {
+      "post": {
         "description": "",
         "parameters": [
           {
-            "name": "key",
-            "in": "query",
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "example": "any"
+                }
+              }
+            }
           }
         ],
         "responses": {
