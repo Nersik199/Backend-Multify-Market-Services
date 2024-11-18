@@ -175,7 +175,7 @@ export default {
 					},
 				],
 				order: [['id', 'DESC']],
-				limit,
+				limit: +limit,
 				offset,
 			});
 
@@ -258,7 +258,7 @@ export default {
 					},
 				],
 				limit: +limit,
-				offset: +offset,
+				offset,
 				order: [['id', 'DESC']],
 			});
 			if (!products) {
@@ -453,7 +453,7 @@ export default {
 						where: { id: user.storeId },
 					},
 				],
-				limit,
+				limit: +limit,
 				offset,
 				order: [['id', 'DESC']],
 			});
