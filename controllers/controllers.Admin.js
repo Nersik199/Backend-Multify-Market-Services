@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
-
+import { Op } from 'sequelize';
 //models
 import Photo from '../models/Photo.js';
 import Users from '../models/Users.js';
@@ -11,6 +11,12 @@ import StoreAdmin from '../models/StoreAdmin.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
+
+const calculatePagination = (page, limit, total) => {
+	const maxPageCount = Math.ceil(total / limit);
+	const offset = (page - 1) * limit;
+	return { maxPageCount, offset };
+};
 
 export default {
 	getCategories: async (req, res) => {
@@ -124,7 +130,14 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const offset = (page - 1) * limit;
+			const total = await ProductCategories.count({ where: { categoryId } });
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
 
 			if (!categoryId) {
 				res.status(400).json({
@@ -162,8 +175,8 @@ export default {
 					},
 				],
 				order: [['id', 'DESC']],
-				limit: +limit,
-				offset: +offset,
+				limit,
+				offset,
 			});
 
 			if (!products.length === 0) {
@@ -188,7 +201,9 @@ export default {
 
 			res.status(200).json({
 				products: filteredProducts,
-				default: `page=${page} limit=${limit}`,
+				total,
+				currentPage: page,
+				maxPageCount,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {
@@ -204,7 +219,14 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const offset = (page - 1) * limit;
+			const total = await Products.count();
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
 
 			const user = await Users.findByPk(id);
 			if (user.role !== 'admin') {
@@ -248,7 +270,9 @@ export default {
 
 			res.status(200).json({
 				products,
-				default: `page=${page} limit=${limit}`,
+				total,
+				currentPage: page,
+				maxPageCount,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {
@@ -368,6 +392,90 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error deleting product',
+			});
+		}
+	},
+
+	searchStoreProduct: async (req, res) => {
+		try {
+			const { id } = req.user;
+
+			const {
+				search = '',
+				minPrice = 0,
+				maxPrice = Number.MAX_VALUE,
+				limit = 10,
+				page = 1,
+			} = req.query;
+
+			const user = await StoreAdmin.findOne({ where: { userId: id } });
+
+			if (!user) {
+				res.status(404).json({ message: 'Store not found for this user' });
+				return;
+			}
+
+			const total = await Products.count({
+				where: {
+					name: {
+						[Op.like]: `%${search}%`,
+					},
+					price: {
+						[Op.between]: [minPrice, maxPrice],
+					},
+				},
+			});
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
+
+			const products = await Products.findAll({
+				where: {
+					name: {
+						[Op.like]: `%${search}%`,
+					},
+					price: {
+						[Op.between]: [minPrice, maxPrice],
+					},
+				},
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path', 'id'],
+					},
+					{
+						model: Stores,
+						attributes: ['name'],
+						where: { id: user.storeId },
+					},
+				],
+				limit,
+				offset,
+				order: [['id', 'DESC']],
+			});
+
+			if (products.length === 0) {
+				res.status(404).json({
+					message: 'No products found',
+				});
+				return;
+			}
+
+			res.status(200).json({
+				products,
+				total,
+				currentPage: page,
+				maxPageCount,
+				message: 'Products fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching products',
 			});
 		}
 	},
