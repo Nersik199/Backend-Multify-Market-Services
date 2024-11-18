@@ -19,9 +19,9 @@ router.post(
 router.post('/login', validate(userSchema.login, 'body'), controllers.login);
 router.get('/profile', checkToken, controllers.profile);
 
-router.get(
+router.post(
 	'/activate',
-	validate(userSchema.activeAccount, 'query'),
+	validate(userSchema.activeAccount, 'body'),
 	controllers.activeAccount
 );
 

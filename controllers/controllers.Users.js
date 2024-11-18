@@ -52,7 +52,7 @@ export default {
 					},
 				],
 			});
-			const activationKey = uuid();
+			const activationKey = uuid().slice(0, 6);
 
 			await Users.update(
 				{
@@ -63,11 +63,16 @@ export default {
 
 			await sendMail({
 				to: result.email,
-				subject: 'welcome to our site',
+				subject: 'welcome to world of construction',
 				template: 'sendEmailCode',
 				templateData: {
-					title: `hi ${user.firstName} ${user.lastName}`,
-					link: `http://localhost:3000/users/activate?key=${activationKey}`,
+					fullName: ` ${user.firstName} ${user.lastName}`,
+					code1: activationKey[0],
+					code2: activationKey[1],
+					code3: activationKey[2],
+					code4: activationKey[3],
+					code5: activationKey[4],
+					code6: activationKey[5],
 				},
 			});
 			res.status(201).json({
@@ -82,14 +87,14 @@ export default {
 
 	async activeAccount(req, res) {
 		try {
-			const { key } = req.query;
+			const { key } = req.body;
 			const user = await Users.findOne({
 				where: { activationKey: key },
 			});
 
 			if (!user) {
 				res.status(404).json({
-					message: 'User does not exist',
+					message: 'Invalid activation key',
 				});
 				return;
 			}

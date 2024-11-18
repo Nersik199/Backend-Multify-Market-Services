@@ -10,7 +10,7 @@ export default {
 		dateOfBirth: Joi.date().required(),
 	}),
 	activeAccount: Joi.object({
-		key: Joi.string().min(3).max(100).required(),
+		key: Joi.string().max(6).required(),
 	}),
 
 	login: Joi.object({
