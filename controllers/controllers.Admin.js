@@ -8,6 +8,8 @@ import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
 import StoreAdmin from '../models/StoreAdmin.js';
+import Reviews from '../models/Reviews.js';
+import Comments from '../models/Comments.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
@@ -210,6 +212,141 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error fetching products',
+			});
+		}
+	},
+
+	getProductById: async (req, res) => {
+		try {
+			const { productId } = req.params;
+			const { id } = req.user;
+			const {
+				limitComments = 10,
+				pageComments = 1,
+				limitReviews = 10,
+				pageReviews = 1,
+			} = req.query;
+
+			if (!productId) {
+				res.status(400).json({ message: 'Product id is required' });
+				return;
+			}
+			const reviewsTotal = await Reviews.count({ where: { productId: id } });
+
+			const { maxPageCountReviews, offsetReviews } = calculatePagination(
+				pageReviews,
+				limitReviews,
+				reviewsTotal
+			);
+
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
+
+			const product = await Products.findOne({
+				where: { id: productId },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['id', 'path'],
+					},
+					{
+						model: Stores,
+						as: 'store',
+						where: { id: store.storeId },
+						attributes: ['name'],
+					},
+					{
+						model: Reviews,
+						where: { productId },
+						attributes: ['id', 'rating', 'review'],
+						include: [
+							{
+								model: Users,
+								attributes: ['firstName', 'lastName', 'email'],
+							},
+							{
+								model: Comments,
+								attributes: ['id', 'comment'],
+								include: [
+									{
+										model: Users,
+										attributes: ['firstName', 'lastName', 'email'],
+									},
+								],
+								limit: +limitComments,
+								offset: (pageComments - 1) * limitComments,
+							},
+						],
+						order: [['createdAt', 'DESC']],
+						limit: +limitReviews,
+						offset: offsetReviews,
+					},
+				],
+			});
+
+			if (!product) {
+				res.status(404).json({
+					message: 'Product not found',
+				});
+				return;
+			}
+
+			const result = {
+				product: {
+					id: product.id,
+					name: product.name,
+					description: product.description,
+					price: product.price,
+					size: product.size,
+					brandName: product.brandName,
+					images: product.productImage
+						? product.productImage.map(image => ({
+								id: image.id,
+								url: image.path,
+						  }))
+						: [],
+					store: product.store
+						? {
+								id: product.store.id,
+								name: product.store.name,
+						  }
+						: null,
+				},
+				information: product.reviews
+					? product.reviews.map(review => ({
+							review: {
+								id: review.id,
+								rating: review.rating,
+								review: review.review,
+								firstName: review.user.firstName,
+								lastName: review.user.lastName,
+								email: review.user.email,
+							},
+							comments: review.comments
+								? review.comments.map(comment => ({
+										id: comment.id,
+										comment: comment.comment,
+										firstName: comment.user.firstName,
+										lastName: comment.user.lastName,
+										email: comment.user.email,
+								  }))
+								: [],
+					  }))
+					: [],
+			};
+
+			res.status(200).json({
+				result,
+				reviewsTotal,
+				pageReviews,
+				pageComments,
+				maxPageCountReviews,
+				message: 'Product fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching product',
 			});
 		}
 	},
