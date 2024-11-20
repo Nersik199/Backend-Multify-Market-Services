@@ -1,39 +1,38 @@
 import sequelize from '../client/sequelize.mysql.js';
 import { DataTypes, Model } from 'sequelize';
-import Users from "./Users.js";
-import Products from "./Products.js";
+import Users from './Users.js';
+import Products from './Products.js';
 
 class Reviews extends Model {}
 
 Reviews.init(
-    {
-        id: {
-            type: DataTypes.BIGINT.UNSIGNED,
-            allowNull: false,
-            primaryKey: true,
-            autoIncrement: true,
-        },
+	{
+		id: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			allowNull: false,
+			primaryKey: true,
+			autoIncrement: true,
+		},
 
-        review: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-        },
-        rating: {
-            type: DataTypes.TINYINT.UNSIGNED,
-            allowNull: false,
-            validate: {
-                min: 1,
-                max: 5,
-            },
-        }
-    },
-    {
-        sequelize,
-        timestamps: true,
-        modelName: 'reviews',
-        tableName: 'reviews',
-
-    }
+		review: {
+			type: DataTypes.TEXT,
+			allowNull: false,
+		},
+		rating: {
+			type: DataTypes.INTEGER.UNSIGNED,
+			allowNull: false,
+			validate: {
+				min: 1,
+				max: 5,
+			},
+		},
+	},
+	{
+		sequelize,
+		timestamps: true,
+		modelName: 'reviews',
+		tableName: 'reviews',
+	}
 );
 
 Reviews.belongsTo(Users, { foreignKey: 'userId', onDelete: 'cascade' });

@@ -1,149 +1,161 @@
-import Products from "../models/Products.js"
-import Reviews from "../models/Reviews.js";
+import Products from '../models/Products.js';
+import Reviews from '../models/Reviews.js';
 import Users from '../models/Users.js';
-import {Sequelize} from "sequelize";
+import { Sequelize } from 'sequelize';
 
 export default {
-    createReview: async (req, res) => {
-        try {
-            const { id: userId } = req.user;
-            const { review, rating } = req.body;
-            const { id: productId } = req.query;
+	createReview: async (req, res) => {
+		try {
+			const { id: userId } = req.user;
+			const { review, rating } = req.body;
+			const { productId } = req.params;
 
-            const product = await Products.findOne({
-                where: { id: productId }
-            });
+			if (!productId) {
+				return res.status(400).json({
+					message: 'Invalid request: productId is required.',
+				});
+			}
 
-            if (!product) {
-                return res.status(404).json({ message: "product not found." });
-            }
+			const product = await Products.findOne({
+				where: { id: productId },
+			});
 
-            const [reviews,created]= await Reviews.findOrCreate({
-                where: { userId: userId, productId: productId },
-                defaults:{
-                    review:review,
-                    rating:rating,
-                    userid:userId,
-                    productId:productId,
-                }
-            })
+			if (!product) {
+				return res.status(404).json({ message: 'product not found.' });
+			}
 
-            if (!created) {
-                return res.status(409).json({
-                    message: 'You have already submitted a review for this product.',
-                    product: product,
-                    review: reviews
-                });
-            }
+			const [reviews, created] = await Reviews.findOrCreate({
+				where: { userId, productId },
+				defaults: {
+					review,
+					rating,
+					userId,
+					productId,
+				},
+			});
 
-            res.status(201).json({
-                message: 'Review created successfully',
-                product: product,
-                review: reviews
-            });
+			if (!created) {
+				res.status(409).json({
+					message: 'You have already submitted a review for this product.',
+					product: product,
+					review: reviews,
+				});
+				return;
+			}
 
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'An error occurred while creating the review' });
-        }
-    },
-    getReviews: async (req, res) => {
-        try{
+			res.status(201).json({
+				message: 'Review created successfully',
+				product: product,
+				review: reviews,
+			});
+		} catch (error) {
+			console.error(error);
+			res
+				.status(500)
+				.json({ error: 'An error occurred while creating the review' });
+		}
+	},
+	getReviews: async (req, res) => {
+		try {
+			const { productId } = req.params;
 
-            const { productId } = req.query;
+			if (!productId) {
+				return res.status(400).json({
+					message: 'Invalid request: productId is required.',
+				});
+			}
 
-            if (!productId) {
-                return res.status(400).json({
-                    message: "Invalid request: productId is required."
-                });
-            }
+			const product = await Products.findOne({
+				where: { id: productId },
+			});
 
-            const product = await Products.findOne({
-                where: { id: productId }
-            });
+			if (!product) {
+				return res.status(404).json({ message: 'product not found' });
+			}
 
-            if (!product) {
-                return res.status(404).json({ message: 'product not found' });
-            }
+			const productsReviews = await Reviews.findAll({
+				where: { productId },
+				include: [
+					{
+						model: Users,
+						attributes: ['id', 'firstName', 'lastName', 'email'],
+					},
+				],
+				order: [['createdAt', 'DESC']],
+			});
 
-            const productsReviews = await Reviews.findAll({
-                where: { productId: productId },
+			if (productsReviews.length === 0) {
+				res.status(404).json({ message: 'No reviews found' });
+				return;
+			}
 
-                include: [
-                    {
-                        model: Products,
-                    },
-                    {
-                        model: Users,
-                        attributes: ['id', 'username']
-                    }
-                ],
-                order: [['createdAt', 'DESC']],
-            });
+			const ratings = productsReviews.map(review =>
+				parseInt(review.rating, 10)
+			);
+			const totalRatings = ratings.reduce((sum, rating) => sum + rating, 0);
+			const averageRating =
+				ratings.length > 0 ? totalRatings / ratings.length : null;
 
-            const ratings = productsReviews.map(review => parseInt(review.rating, 10));
-            const totalRatings = ratings.reduce((sum, rating) => sum + rating, 0);
-            const averageRating = ratings.length > 0 ? totalRatings / ratings.length : null;
+			res.status(200).json({
+				message: 'Product reviews retrieved successfully',
+				productsReviews,
+				averageRating,
+			});
+		} catch (error) {
+			res.status(500).json({
+				message: 'An error occurred while retrieving reviews.',
+				error: error.message,
+			});
+		}
+	},
+	getReviewSummary: async (req, res) => {
+		const { userId } = req.params;
+		try {
+			const userExists = await Users.findByPk(userId);
 
-            res.status(200).json({
-                message: 'Product reviews retrieved successfully',
-                product,
-                productsReviews,
-                averageRating
-            });
-        }catch (error) {
-            res.status(500).json({
-                message: "An error occurred while retrieving reviews.",
-                error: error.message
-            });
-        }
-    },
-    getReviewSummary:async(req, res) =>{
-        const {userId} = req.params;
+			if (!userExists) {
+				return res.status(404).json({
+					message: 'User not found',
+				});
+				totalReviews;
+			}
 
-        try {
-            const userExists = await Users.findByPk(userId);
+			const reviewSummary = await Reviews.findOne({
+				attributes: [
+					[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalReviews'],
+					[Sequelize.fn('AVG', Sequelize.col('rating')), 'averageRating'],
+					[
+						Sequelize.fn(
+							'COUNT',
+							Sequelize.fn('DISTINCT', Sequelize.col('productId'))
+						),
+						'totalProductsReviewed',
+					],
+				],
+				where: { userId },
+			});
 
-            if (!userExists) {
-                return res.status(404).json({
-                    message: 'User not found'
-                });
-            }
+			if (!reviewSummary) {
+				return res.status(404).json({
+					message: 'No reviews found for this user ',
+					reviewSummary: [],
+				});
+			}
 
-            const reviewSummary = await Reviews.findOne({
-                attributes: [
-                    [Sequelize.fn('COUNT', Sequelize.col('id')), 'totalReviews'],
-                    [Sequelize.fn('AVG', Sequelize.col('rating')), 'averageRating'],
-                    [
-                        Sequelize.fn(
-                            'COUNT',
-                            Sequelize.fn('DISTINCT', Sequelize.col('productId'))
-                        ),
-                        'totalProductsReviewed',
-                    ],
-                ],
-                where: { userId },
-            });
-
-            if (!reviewSummary) {
-                return res.status(404).json({
-                    message: 'No reviews found for this user ',
-                    reviewSummary: []
-                });
-            }
-
-            return res.status(200).json({
-                message: 'User review summary retrieved successfully.',
-                reviewSummary: reviewSummary || { totalReviews: 0, averageRating: null, totalProductsReviewed: 0 },
-
-            });
-        } catch (error) {
-            console.error('Error fetching review summary:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                error: error.message
-            });
-        }
-    }
-    
-}
+			res.status(200).json({
+				message: 'User review summary retrieved successfully.',
+				reviewSummary: reviewSummary || {
+					totalReviews: 0,
+					averageRating: null,
+					totalProductsReviewed: 0,
+				},
+			});
+		} catch (error) {
+			console.error('Error fetching review summary:', error);
+			return res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
+};

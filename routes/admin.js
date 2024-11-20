@@ -19,6 +19,7 @@ router.post(
 
 router.get('/products', checkToken, controllers.getAllProducts);
 router.get('/products/:categoryId', checkToken, controllers.getProducts);
+router.get('/product/:productId', checkToken, controllers.getProductById);
 
 router.put(
 	'/product/:productId',
