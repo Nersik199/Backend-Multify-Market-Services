@@ -9,6 +9,9 @@ import Reviews from './models/Reviews.js';
 import Comments from './models/Comments.js';
 
 
+import Cards from './models/Cards.js';
+
+
 const models = [
 	Users,
 	Stores,
@@ -18,6 +21,10 @@ const models = [
 	ProductCategories,
 	Photo,
 	Reviews,
+
+	Comments,
+	Cards
+
 	Comments
 
 ];
