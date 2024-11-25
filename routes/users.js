@@ -19,9 +19,17 @@ router.post(
 router.post('/login', validate(userSchema.login, 'body'), controllers.login);
 router.get('/profile', checkToken, controllers.profile);
 
-router.get(
+router.post(
 	'/activate',
-	validate(userSchema.activeAccount, 'query'),
+	validate(userSchema.activeAccount, 'body'),
 	controllers.activeAccount
+);
+
+router.put(
+	'/update',
+	uploadFile('avatar').single('avatar'),
+	validate(userSchema.userUpdate, 'body'),
+	checkToken,
+	controllers.updateProfile
 );
 export default router;

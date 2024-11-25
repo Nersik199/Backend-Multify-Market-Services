@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
-
+import { Op } from 'sequelize';
 //models
 import Photo from '../models/Photo.js';
 import Users from '../models/Users.js';
@@ -8,9 +8,17 @@ import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
 import StoreAdmin from '../models/StoreAdmin.js';
+import Reviews from '../models/Reviews.js';
+import Comments from '../models/Comments.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
+
+const calculatePagination = (page, limit, total) => {
+	const maxPageCount = Math.ceil(total / limit);
+	const offset = (page - 1) * limit;
+	return { maxPageCount, offset };
+};
 
 export default {
 	getCategories: async (req, res) => {
@@ -124,7 +132,14 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const offset = (page - 1) * limit;
+			const total = await ProductCategories.count({ where: { categoryId } });
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
 
 			if (!categoryId) {
 				res.status(400).json({
@@ -163,7 +178,7 @@ export default {
 				],
 				order: [['id', 'DESC']],
 				limit: +limit,
-				offset: +offset,
+				offset,
 			});
 
 			if (!products.length === 0) {
@@ -188,7 +203,9 @@ export default {
 
 			res.status(200).json({
 				products: filteredProducts,
-				default: `page=${page} limit=${limit}`,
+				total,
+				currentPage: page,
+				maxPageCount,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {
@@ -199,12 +216,154 @@ export default {
 		}
 	},
 
+	getProductById: async (req, res) => {
+		try {
+			const { productId } = req.params;
+			const { id } = req.user;
+			const {
+				limitComments = 10,
+				pageComments = 1,
+				limitReviews = 10,
+				pageReviews = 1,
+			} = req.query;
+
+			if (!productId) {
+				res.status(400).json({ message: 'Product id is required' });
+				return;
+			}
+			const reviewsTotal = await Reviews.count({ where: { productId: id } });
+
+			const { maxPageCountReviews, offsetReviews } = calculatePagination(
+				pageReviews,
+				limitReviews,
+				reviewsTotal
+			);
+
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
+
+			const product = await Products.findOne({
+				where: { id: productId },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['id', 'path'],
+					},
+					{
+						model: Stores,
+						as: 'store',
+						where: { id: store.storeId },
+						attributes: ['name'],
+					},
+					{
+						model: Reviews,
+						where: { productId },
+						attributes: ['id', 'rating', 'review'],
+						include: [
+							{
+								model: Users,
+								attributes: ['firstName', 'lastName', 'email'],
+							},
+							{
+								model: Comments,
+								attributes: ['id', 'comment'],
+								include: [
+									{
+										model: Users,
+										attributes: ['firstName', 'lastName', 'email'],
+									},
+								],
+								limit: +limitComments,
+								offset: (pageComments - 1) * limitComments,
+							},
+						],
+						order: [['createdAt', 'DESC']],
+						limit: +limitReviews,
+						offset: offsetReviews,
+					},
+				],
+			});
+
+			if (!product) {
+				res.status(404).json({
+					message: 'Product not found',
+				});
+				return;
+			}
+
+			const result = {
+				product: {
+					id: product.id,
+					name: product.name,
+					description: product.description,
+					price: product.price,
+					size: product.size,
+					brandName: product.brandName,
+					images: product.productImage
+						? product.productImage.map(image => ({
+								id: image.id,
+								url: image.path,
+						  }))
+						: [],
+					store: product.store
+						? {
+								id: product.store.id,
+								name: product.store.name,
+						  }
+						: null,
+				},
+				information: product.reviews
+					? product.reviews.map(review => ({
+							review: {
+								id: review.id,
+								rating: review.rating,
+								review: review.review,
+								firstName: review.user.firstName,
+								lastName: review.user.lastName,
+								email: review.user.email,
+							},
+							comments: review.comments
+								? review.comments.map(comment => ({
+										id: comment.id,
+										comment: comment.comment,
+										firstName: comment.user.firstName,
+										lastName: comment.user.lastName,
+										email: comment.user.email,
+								  }))
+								: [],
+					  }))
+					: [],
+			};
+
+			res.status(200).json({
+				result,
+				reviewsTotal,
+				pageReviews,
+				pageComments,
+				maxPageCountReviews,
+				message: 'Product fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching product',
+			});
+		}
+	},
+
 	getAllProducts: async (req, res) => {
 		try {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const offset = (page - 1) * limit;
+			const total = await Products.count();
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
 
 			const user = await Users.findByPk(id);
 			if (user.role !== 'admin') {
@@ -236,7 +395,7 @@ export default {
 					},
 				],
 				limit: +limit,
-				offset: +offset,
+				offset,
 				order: [['id', 'DESC']],
 			});
 			if (!products) {
@@ -248,7 +407,9 @@ export default {
 
 			res.status(200).json({
 				products,
-				default: `page=${page} limit=${limit}`,
+				total,
+				currentPage: page,
+				maxPageCount,
 				message: 'Products fetched successfully',
 			});
 		} catch (error) {
@@ -368,6 +529,90 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error deleting product',
+			});
+		}
+	},
+
+	searchStoreProduct: async (req, res) => {
+		try {
+			const { id } = req.user;
+
+			const {
+				search = '',
+				minPrice = 0,
+				maxPrice = Number.MAX_VALUE,
+				limit = 10,
+				page = 1,
+			} = req.query;
+
+			const user = await StoreAdmin.findOne({ where: { userId: id } });
+
+			if (!user) {
+				res.status(404).json({ message: 'Store not found for this user' });
+				return;
+			}
+
+			const total = await Products.count({
+				where: {
+					name: {
+						[Op.like]: `%${search}%`,
+					},
+					price: {
+						[Op.between]: [minPrice, maxPrice],
+					},
+				},
+			});
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
+
+			const products = await Products.findAll({
+				where: {
+					name: {
+						[Op.like]: `%${search}%`,
+					},
+					price: {
+						[Op.between]: [minPrice, maxPrice],
+					},
+				},
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path', 'id'],
+					},
+					{
+						model: Stores,
+						attributes: ['name'],
+						where: { id: user.storeId },
+					},
+				],
+				limit: +limit,
+				offset,
+				order: [['id', 'DESC']],
+			});
+
+			if (products.length === 0) {
+				res.status(404).json({
+					message: 'No products found',
+				});
+				return;
+			}
+
+			res.status(200).json({
+				products,
+				total,
+				currentPage: page,
+				maxPageCount,
+				message: 'Products fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching products',
 			});
 		}
 	},

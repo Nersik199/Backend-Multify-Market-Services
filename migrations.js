@@ -5,6 +5,9 @@ import Categories from './models/Categories.js';
 import ProductCategories from './models/ProductCategories.js';
 import Photo from './models/Photo.js';
 import StoreAdmin from './models/StoreAdmin.js';
+import Reviews from './models/Reviews.js';
+import Comments from './models/Comments.js';
+
 import Cards from './models/Cards.js';
 
 const models = [
@@ -15,6 +18,8 @@ const models = [
 	Categories,
 	ProductCategories,
 	Photo,
+	Reviews,
+	Comments,
 	Cards
 ];
 

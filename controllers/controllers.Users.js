@@ -4,12 +4,16 @@ import { v4 as uuid } from 'uuid';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
 
+// utils
+import updateImages from '../utils/updateImages.js';
+
 import { sendMail } from '../services/Mail.js';
 
 export default {
 	async registration(req, res) {
 		try {
-			const { firstName, lastName, email, password } = req.body;
+			const { firstName, lastName, email, password, gender, dateOfBirth } =
+				req.body;
 			const { file = null } = req;
 			const mailExists = await Users.findOne({
 				where: { email },
@@ -26,6 +30,8 @@ export default {
 			const user = await Users.create({
 				firstName,
 				lastName,
+				gender,
+				dateOfBirth,
 				email: email.toLowerCase(),
 				password: password,
 			});
@@ -46,7 +52,7 @@ export default {
 					},
 				],
 			});
-			const activationKey = uuid();
+			const activationKey = uuid().slice(0, 6);
 
 			await Users.update(
 				{
@@ -57,11 +63,16 @@ export default {
 
 			await sendMail({
 				to: result.email,
-				subject: 'welcome to our site',
+				subject: 'welcome to world of construction',
 				template: 'sendEmailCode',
 				templateData: {
-					title: `hi ${user.firstName} ${user.lastName}`,
-					link: `http://localhost:3000/users/activate?key=${activationKey}`,
+					fullName: ` ${user.firstName} ${user.lastName}`,
+					code1: activationKey[0],
+					code2: activationKey[1],
+					code3: activationKey[2],
+					code4: activationKey[3],
+					code5: activationKey[4],
+					code6: activationKey[5],
 				},
 			});
 			res.status(201).json({
@@ -76,14 +87,14 @@ export default {
 
 	async activeAccount(req, res) {
 		try {
-			const { key } = req.query;
+			const { key } = req.body;
 			const user = await Users.findOne({
 				where: { activationKey: key },
 			});
 
 			if (!user) {
 				res.status(404).json({
-					message: 'User does not exist',
+					message: 'Invalid activation key',
 				});
 				return;
 			}
@@ -113,7 +124,7 @@ export default {
 			const { email, password } = req.body;
 
 			const user = await Users.findOne({
-				where: { email },
+				where: { email: email.toLowerCase() },
 			});
 
 			if (
@@ -203,6 +214,80 @@ export default {
 			res.status(200).json({ user });
 		} catch (e) {
 			console.error('Error fetching user profile:', e);
+			res.status(500).json({
+				message: e.message,
+				status: 500,
+			});
+		}
+	},
+
+	async updateProfile(req, res) {
+		try {
+			const { id } = req.user;
+			const { file = null } = req;
+			const { firstName, lastName, gender, dateOfBirth } = req.body;
+
+			const user = await Users.findOne({
+				where: { id },
+				attributes: [
+					'id',
+					'email',
+					'firstName',
+					'lastName',
+					'gender',
+					'dateOfBirth',
+				],
+				include: [
+					{
+						model: Photo,
+						as: 'avatar',
+						attributes: ['id', 'path'],
+					},
+				],
+			});
+
+			if (file && file.path) {
+				if (user.avatar.length === 0) {
+					await Photo.create({
+						path: file.path,
+						userId: user.id,
+					});
+				}
+
+				if (user.avatar.length > 0 && user.avatar[0].path) {
+					const publicId = `avatar/${user.avatar[0].path
+						.split('/')
+						.pop()
+						.split('.')
+						.slice(0, -1)
+						.join('.')}`;
+
+					console.log(publicId);
+
+					await cloudinary.uploader.destroy(publicId);
+
+					await Photo.update(
+						{ path: file.path },
+						{ where: { userId: user.id } }
+					);
+				}
+			}
+
+			await Users.update(
+				{
+					firstName,
+					lastName,
+					gender,
+					dateOfBirth,
+				},
+				{ where: { id } }
+			);
+
+			res.status(200).json({
+				message: 'Profile updated successfully',
+			});
+		} catch (e) {
+			console.error('Error updating profile:', e);
 			res.status(500).json({
 				message: e.message,
 				status: 500,
