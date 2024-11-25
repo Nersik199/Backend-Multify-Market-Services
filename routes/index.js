@@ -10,7 +10,9 @@ import reviews from './reviews.js';
 import comments from './comments.js';
 import payment from './payment.js';
 
+
 import cards from './cards.js';
+
 const router = Router();
 router.use('/superAdmin', superAdmin);
 router.use('/users', users);
@@ -20,7 +22,9 @@ router.use('/categories', categories);
 router.use('/reviews', reviews);
 router.use('/comments', comments);
 router.use('/api/payments', payment);
+
 router.use('/cards', cards);
+
 
 router.get('/', (req, res) => {
 	res.render('index');
