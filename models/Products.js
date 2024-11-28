@@ -2,7 +2,6 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '../client/sequelize.mysql.js';
 
 import Stores from './Stores.js';
-
 class Products extends Model {}
 
 Products.init(
