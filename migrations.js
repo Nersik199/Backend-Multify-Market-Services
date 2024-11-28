@@ -7,7 +7,7 @@ import Photo from './models/Photo.js';
 import StoreAdmin from './models/StoreAdmin.js';
 import Reviews from './models/Reviews.js';
 import Comments from './models/Comments.js';
-
+import Cards from './models/Cards.js';
 
 const models = [
 	Users,
@@ -18,8 +18,8 @@ const models = [
 	ProductCategories,
 	Photo,
 	Reviews,
-	Comments
-
+	Comments,
+	Cards,
 ];
 
 (async () => {
