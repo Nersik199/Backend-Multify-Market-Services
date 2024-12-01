@@ -109,13 +109,15 @@ export default {
 		}
 	},
 	getReviewSummary: async (req, res) => {
-		const { userId } = req.params;
+		const { productId } = req.params;
 		try {
-			const userExists = await Users.findByPk(userId);
+			const productExists = await Reviews.findOne({
+				where: { productId },
+			});
 
-			if (!userExists) {
+			if (!productExists) {
 				return res.status(404).json({
-					message: 'User not found',
+					message: 'Product not found',
 				});
 				totalReviews;
 			}
@@ -132,18 +134,18 @@ export default {
 						'totalProductsReviewed',
 					],
 				],
-				where: { userId },
+				where: { productId },
 			});
 
 			if (!reviewSummary) {
 				return res.status(404).json({
-					message: 'No reviews found for this user ',
+					message: 'Review summary not found',
 					reviewSummary: [],
 				});
 			}
 
 			res.status(200).json({
-				message: 'User review summary retrieved successfully.',
+				message: 'Review summary retrieved successfully',
 				reviewSummary: reviewSummary || {
 					totalReviews: 0,
 					averageRating: null,

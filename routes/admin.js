@@ -6,6 +6,7 @@ import validate from '../middleware/validate.js';
 import uploadFile from '../middleware/uploadFile.js';
 
 import adminSchema from '../schemas/admin.js';
+
 const router = Router();
 router.get('/categories', checkToken, controllers.getCategories);
 
