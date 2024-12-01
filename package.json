@@ -9,7 +9,10 @@
 		"swg": "node swagger.js"
 	},
 	"devDependencies": {
-		"nodemon": "^3.1.7"
+		"nodemon": "^3.1.7",
+		"swagger-autogen": "^2.23.7",
+		"swagger-jsdoc": "^6.2.8",
+		"swagger-ui-express": "^5.0.1"
 	},
 	"dependencies": {
 		"cloudinary": "^1.41.3",
@@ -30,9 +33,6 @@
 		"nodemailer": "^6.9.15",
 		"sequelize": "^6.37.4",
 		"stripe": "^17.3.1",
-		"swagger-autogen": "^2.23.7",
-		"swagger-jsdoc": "^6.2.8",
-		"swagger-ui-express": "^5.0.1",
 		"uuid": "^10.0.0"
 	}
 }

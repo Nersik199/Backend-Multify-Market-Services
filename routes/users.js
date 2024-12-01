@@ -32,4 +32,11 @@ router.put(
 	checkToken,
 	controllers.updateProfile
 );
+router.put(
+	'/password',
+	validate(userSchema.changePassword, 'body'),
+	checkToken,
+	controllers.changePassword
+);
+
 export default router;

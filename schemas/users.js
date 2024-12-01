@@ -25,8 +25,7 @@ export default {
 		dateOfBirth: Joi.date().required(),
 	}),
 
-	updatePassword: Joi.object({
+	changePassword: Joi.object({
 		newPassword: Joi.string().min(3).max(50).required(),
-		repeatPassword: Joi.string().min(3).max(50).required(),
 	}),
 };
