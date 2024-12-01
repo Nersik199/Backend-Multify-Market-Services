@@ -4,9 +4,6 @@ import { v4 as uuid } from 'uuid';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
 
-// utils
-import updateImages from '../utils/updateImages.js';
-
 import { sendMail } from '../services/Mail.js';
 
 export default {
@@ -33,7 +30,7 @@ export default {
 				gender,
 				dateOfBirth,
 				email: email.toLowerCase(),
-				password: password,
+				password: password.trim(),
 			});
 
 			if (file) {
@@ -288,6 +285,29 @@ export default {
 			});
 		} catch (e) {
 			console.error('Error updating profile:', e);
+			res.status(500).json({
+				message: e.message,
+				status: 500,
+			});
+		}
+	},
+	async changePassword(req, res) {
+		try {
+			const { id } = req.user;
+			const { newPassword } = req.body;
+
+			await Users.update(
+				{
+					password: newPassword.trim(),
+				},
+				{ where: { id } }
+			);
+
+			res.status(200).json({
+				message: 'Password updated successfully',
+			});
+		} catch (e) {
+			console.error('Error updating password:', e);
 			res.status(500).json({
 				message: e.message,
 				status: 500,

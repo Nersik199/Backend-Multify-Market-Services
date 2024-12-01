@@ -18,6 +18,6 @@ router.post(
 );
 
 router.get('/list/:productId', controllers.getReviews);
-router.get('/summary/:userId', controllers.getReviewSummary);
+router.get('/summary/:productId', controllers.getReviewSummary);
 
 export default router;
