@@ -1,4 +1,5 @@
 import './migrations.js';
+import fs from 'fs';
 import createError from 'http-errors';
 import express from 'express';
 import path from 'path';
@@ -6,8 +7,9 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger-output.json' assert { type: 'json' };
-// Swagger setup
+
+const swaggerPath = path.resolve('./swagger-output.json');
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf-8'));
 
 //router
 import indexRouter from './routes/index.js';
