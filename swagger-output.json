@@ -325,6 +325,44 @@
         }
       }
     },
+    "/users/password": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "newPassword": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/admin/categories": {
       "get": {
         "description": "",
@@ -1016,12 +1054,12 @@
         }
       }
     },
-    "/reviews/summary/{userId}": {
+    "/reviews/summary/{productId}": {
       "get": {
         "description": "",
         "parameters": [
           {
-            "name": "userId",
+            "name": "productId",
             "in": "path",
             "required": true,
             "type": "string"
