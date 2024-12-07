@@ -7,13 +7,18 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
+import session from 'express-session';
 
-const swaggerPath = path.resolve('./swagger-output.json');
-const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf-8'));
+import passport from 'passport';
+import { setupGoogleAuth, setupAuthRoutes } from './services/google.auth.js';
 
 //router
 import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
+
+const swaggerPath = path.resolve('./swagger-output.json');
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf-8'));
+
 const app = express();
 
 const corsOptions = {
@@ -27,6 +32,19 @@ app.use(cors(corsOptions));
 // view engine setup
 app.set('views', path.join(path.resolve(), 'views'));
 app.set('view engine', 'ejs');
+app.use(
+	session({
+		secret: process.env.SESSION_SECRET,
+		resave: false,
+		saveUninitialized: true,
+	})
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Google OAuth
+setupGoogleAuth();
+setupAuthRoutes(app);
 
 app.use(logger('dev'));
 app.use(express.json());
