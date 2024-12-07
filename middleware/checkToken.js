@@ -4,7 +4,8 @@ import Users from '../models/Users.js';
 const { JWT_TOKEN } = process.env;
 
 export default async (req, res, next) => {
-	const token = req.headers.authorization;
+	const token = req.headers.authorization || req.cookies.authorization;
+
 	if (!token) {
 		res.status(401).json({ message: 'Unauthorized' });
 		return;
