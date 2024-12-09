@@ -6,7 +6,7 @@ import Users from '../models/Users.js';
 import Reviews from '../models/Reviews.js';
 import Comments from '../models/Comments.js';
 import { Op } from 'sequelize';
-
+import redis from '../client/redis.Client.js';
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
 	const offset = (page - 1) * limit;
@@ -57,7 +57,14 @@ export default {
 			const total = await Products.count();
 			const page = +req.query.page || 1;
 			const limit = +req.query.limit || 10;
+			const cacheKey = 'products';
 
+			const cachedProducts = await redis.get(cacheKey);
+			if (cachedProducts) {
+				const products = JSON.parse(cachedProducts);
+				res.status(200).json({ ...products });
+				return;
+			}
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
 			if (page > maxPageCount) {
@@ -85,11 +92,15 @@ export default {
 			if (productsList.length === 0) {
 				return res.status(404).json({ message: 'No products found' });
 			}
-
-			return res.status(200).json({
+			const cacheData = {
 				message: 'Products retrieved successfully',
+				total,
+				currentPage: page,
+				maxPageCount,
 				products: productsList,
-			});
+			};
+			await redis.set(cacheKey, JSON.stringify(cacheData), 'EX', 3600);
+			return res.status(200).json({ ...cacheData });
 		} catch (error) {
 			return handleErrorResponse(res, 500, 'Error fetching products', error);
 		}
@@ -103,6 +114,15 @@ export default {
 				limitComments = 10,
 				pageComments = 1,
 			} = req.query;
+
+			const cacheKey = 'productById';
+
+			const cachedProducts = await redis.get(cacheKey);
+			if (cachedProducts) {
+				const product = JSON.parse(cachedProducts);
+				res.status(200).json({ ...product });
+				return;
+			}
 
 			const reviewsTotal = await Reviews.count({ where: { productId: id } });
 
@@ -208,15 +228,17 @@ export default {
 					  }))
 					: [],
 			};
-
-			res.status(200).json({
+			const cacheData = {
+				message: 'Product fetched successfully',
 				result,
 				reviewsTotal,
 				pageReviews,
 				pageComments,
 				maxPageCountReviews,
-				message: 'Product fetched successfully',
-			});
+			};
+
+			await redis.set(cacheKey, JSON.stringify(cacheData), 'EX', 3600);
+			res.status(200).json({ ...cacheData });
 		} catch (error) {
 			return handleErrorResponse(res, 500, 'Error fetching product', error);
 		}
