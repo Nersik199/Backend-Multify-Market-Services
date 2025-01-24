@@ -89,6 +89,9 @@ export default {
 			return res.status(200).json({
 				message: 'Products retrieved successfully',
 				products: productsList,
+				total,
+				currentPage: page,
+				maxPageCount,
 			});
 		} catch (error) {
 			return handleErrorResponse(res, 500, 'Error fetching products', error);
