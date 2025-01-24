@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuid } from 'uuid';
-
+import jwt from 'jsonwebtoken';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
 
@@ -107,6 +107,64 @@ export default {
 
 			res.status(200).json({
 				message: 'Account activated successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
+
+	async resendActivationKey(req, res) {
+		try {
+			const { email } = req.body;
+
+			const user = await Users.findOne({
+				where: { email: email.toLowerCase() },
+			});
+
+			if (!user) {
+				res.status(404).json({
+					message: 'User not found',
+				});
+				return;
+			}
+
+			if (user.status === 'active') {
+				res.status(400).json({
+					message: 'Account already activated',
+				});
+				return;
+			}
+
+			const activationKey = uuid().slice(0, 6);
+
+			await Users.update(
+				{
+					activationKey,
+				},
+				{ where: { id: user.id } }
+			);
+
+			await sendMail({
+				to: user.email,
+				subject: 'Resend Activation Key',
+				template: 'sendEmailCode',
+				templateData: {
+					fullName: `${user.firstName} ${user.lastName}`,
+					code1: activationKey[0],
+					code2: activationKey[1],
+					code3: activationKey[2],
+					code4: activationKey[3],
+					code5: activationKey[4],
+					code6: activationKey[5],
+				},
+			});
+
+			res.status(200).json({
+				message: 'Activation key resent successfully',
 			});
 		} catch (error) {
 			console.log(error);
@@ -312,6 +370,70 @@ export default {
 				message: e.message,
 				status: 500,
 			});
+		}
+	},
+
+	async forgotPassword(req, res) {
+		try {
+			const { email } = req.body;
+			const { USER_PASSWORD_SECRET } = process.env;
+			const user = await Users.findOne({ where: { email } });
+			if (!user) {
+				res.status(404).json({ message: 'wrong email address' });
+				return;
+			}
+			if (user.status !== 'active') {
+				res.status(401).json({ message: 'Please activate your account' });
+				return;
+			}
+			const payload = jwt.sign(
+				{ id: user.id, email: user.email },
+				USER_PASSWORD_SECRET,
+				{
+					expiresIn: '6d',
+				}
+			);
+
+			await sendMail({
+				to: user.email,
+				subject: 'update password account',
+				template: 'passwordMessage',
+				templateData: {
+					title: 'Update password',
+					link: `http://localhost:3000/users/update/password?key=${payload}`,
+				},
+			});
+			res.status(200).json({ message: 'Email sent successfully' });
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({ message: error.message });
+		}
+	},
+
+	async updatePassword(req, res) {
+		try {
+			const { repeatPassword } = req.body;
+			const { key } = req.query;
+			const { USER_PASSWORD_SECRET } = process.env;
+
+			if (!key) {
+				return res.status(400).json({ message: 'Token must be provided' });
+			}
+			const verifyPass = jwt.verify(key, USER_PASSWORD_SECRET);
+
+			if (!verifyPass) {
+				return res.status(401).json({ message: 'Invalid password key' });
+			}
+
+			await Users.update(
+				{ password: repeatPassword },
+				{ where: { id: verifyPass.id } }
+			);
+
+			res.status(200).json({ message: 'Password updated successfully' });
+		} catch (error) {
+			console.log('Error:', error);
+			res.status(500).json({ message: error.message });
 		}
 	},
 };

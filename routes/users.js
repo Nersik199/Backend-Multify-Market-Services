@@ -9,6 +9,14 @@ import uploadFile from '../middleware/uploadFile.js';
 import userSchema from '../schemas/users.js';
 const router = Router();
 
+router.get('/update/password', (req, res) => {
+	const { key } = req.query;
+	if (!key) {
+		return res.status(400).json({ message: 'Token must be provided' });
+	}
+	res.render('updatePassword', { key });
+});
+
 router.post(
 	'/registration',
 	uploadFile('avatar').single('avatar'),
@@ -25,6 +33,12 @@ router.post(
 	controllers.activeAccount
 );
 
+router.post(
+	'/resend-activation-key',
+	validate(userSchema.resetActivationKey, 'body'),
+	controllers.resendActivationKey
+);
+
 router.put(
 	'/update',
 	uploadFile('avatar').single('avatar'),
@@ -37,6 +51,13 @@ router.put(
 	validate(userSchema.changePassword, 'body'),
 	checkToken,
 	controllers.changePassword
+);
+
+router.post('/forgot/password', controllers.forgotPassword);
+router.put(
+	'/update/password',
+	validate(userSchema.updatePassword, 'body'),
+	controllers.updatePassword
 );
 
 export default router;
