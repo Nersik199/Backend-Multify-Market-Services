@@ -33,4 +33,8 @@ export default {
 		newPassword: Joi.string().min(3).max(50).required(),
 		repeatPassword: Joi.string().min(3).max(50).required(),
 	}),
+
+	resetActivationKey: Joi.object({
+		email: Joi.string().email().required(),
+	}),
 };

@@ -33,6 +33,12 @@ router.post(
 	controllers.activeAccount
 );
 
+router.post(
+	'/resend-activation-key',
+	validate(userSchema.resetActivationKey, 'body'),
+	controllers.resendActivationKey
+);
+
 router.put(
 	'/update',
 	uploadFile('avatar').single('avatar'),

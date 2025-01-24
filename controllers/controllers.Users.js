@@ -116,6 +116,64 @@ export default {
 			});
 		}
 	},
+
+	async resendActivationKey(req, res) {
+		try {
+			const { email } = req.body;
+
+			const user = await Users.findOne({
+				where: { email: email.toLowerCase() },
+			});
+
+			if (!user) {
+				res.status(404).json({
+					message: 'User not found',
+				});
+				return;
+			}
+
+			if (user.status === 'active') {
+				res.status(400).json({
+					message: 'Account already activated',
+				});
+				return;
+			}
+
+			const activationKey = uuid().slice(0, 6);
+
+			await Users.update(
+				{
+					activationKey,
+				},
+				{ where: { id: user.id } }
+			);
+
+			await sendMail({
+				to: user.email,
+				subject: 'Resend Activation Key',
+				template: 'sendEmailCode',
+				templateData: {
+					fullName: `${user.firstName} ${user.lastName}`,
+					code1: activationKey[0],
+					code2: activationKey[1],
+					code3: activationKey[2],
+					code4: activationKey[3],
+					code5: activationKey[4],
+					code6: activationKey[5],
+				},
+			});
+
+			res.status(200).json({
+				message: 'Activation key resent successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
 	async login(req, res) {
 		try {
 			const { email, password } = req.body;
