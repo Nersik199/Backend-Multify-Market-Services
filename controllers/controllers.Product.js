@@ -277,6 +277,9 @@ export default {
 
 			return res.status(200).json({
 				message: 'Products retrieved successfully',
+				total,
+				currentPage: page,
+				maxPageCount,
 				products: productsList,
 			});
 		} catch (error) {
