@@ -1,6 +1,6 @@
-import { Sequelize, where } from 'sequelize';
 import Cards from '../models/Cards.js';
 import Products from '../models/Products.js';
+import Photo from '../models/Photo.js';
 export default {
 	async create(req, res) {
 		try {
@@ -68,6 +68,13 @@ export default {
 						model: Products,
 						as: 'product',
 						attributes: ['id', 'name', 'price'],
+						include: [
+							{
+								model: Photo,
+								as: 'productImage',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 				],
 				limit: +limit,
