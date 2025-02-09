@@ -66,6 +66,10 @@ Users.init(
 			type: DataTypes.STRING,
 			defaultValue: 'pending',
 		},
+		resetCode: {
+			type: DataTypes.STRING,
+			defaultValue: null,
+		},
 	},
 	{
 		sequelize,
