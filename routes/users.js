@@ -9,14 +9,6 @@ import uploadFile from '../middleware/uploadFile.js';
 import userSchema from '../schemas/users.js';
 const router = Router();
 
-router.get('/update/password', (req, res) => {
-	const { key } = req.query;
-	if (!key) {
-		return res.status(400).json({ message: 'Token must be provided' });
-	}
-	res.render('updatePassword', { key });
-});
-
 router.post(
 	'/registration',
 	uploadFile('avatar').single('avatar'),
