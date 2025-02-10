@@ -317,8 +317,6 @@ export default {
 						.slice(0, -1)
 						.join('.')}`;
 
-					console.log(publicId);
-
 					await cloudinary.uploader.destroy(publicId);
 
 					await Photo.update(
