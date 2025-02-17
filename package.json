@@ -15,6 +15,7 @@
 		"swagger-ui-express": "^5.0.1"
 	},
 	"dependencies": {
+		"@a2seven/yoo-checkout": "^1.1.4",
 		"cloudinary": "^1.41.3",
 		"cookie-parser": "~1.4.4",
 		"cors": "^2.8.5",
@@ -36,6 +37,7 @@
 		"passport-google-oauth20": "^2.0.0",
 		"sequelize": "^6.37.4",
 		"stripe": "^17.3.1",
-		"uuid": "^10.0.0"
+		"uuid": "^10.0.0",
+		"yookassa": "^0.1.1"
 	}
 }

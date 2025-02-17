@@ -8,8 +8,8 @@ import products from './products.js';
 import categories from './categories.js';
 import reviews from './reviews.js';
 import comments from './comments.js';
-import payment from './payment.js';
 import cards from './cards.js';
+import payment from './payments.js';
 
 const router = Router();
 
@@ -20,8 +20,8 @@ router.use('/products', products);
 router.use('/categories', categories);
 router.use('/reviews', reviews);
 router.use('/comments', comments);
-router.use('/api/payments', payment);
 router.use('/cards', cards);
+router.use('/payment', payment);
 
 router.get('/', (req, res) => {
 	res.render('index');
