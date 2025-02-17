@@ -5,7 +5,8 @@ import Stores from '../models/Stores.js';
 import Users from '../models/Users.js';
 import Reviews from '../models/Reviews.js';
 import Comments from '../models/Comments.js';
-import { Op } from 'sequelize';
+import Payments from '../models/Payments.js';
+import { Op, Sequelize } from 'sequelize';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -387,6 +388,41 @@ export default {
 			});
 		} catch (error) {
 			return handleErrorResponse(res, 500, 'Error searching products', error);
+		}
+	},
+
+	async getMostPopularProducts(req, res) {
+		try {
+			const popularProducts = await Payments.findAll({
+				attributes: [
+					[Sequelize.fn('COUNT', Sequelize.col('productId')), 'purchaseCount'],
+				],
+				include: [
+					{
+						model: Products,
+						attributes: [
+							'id',
+							'name',
+							'size',
+							'price',
+							'description',
+							'brandName',
+						],
+					},
+				],
+				group: ['payments.productId'],
+				order: [[Sequelize.fn('COUNT', Sequelize.col('productId')), 'DESC']],
+				limit: 10,
+			});
+
+			if (popularProducts.length === 0) {
+				return res.json({ message: 'No popular products' });
+			}
+
+			res.json({ data: popularProducts });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ success: false, message: error.message });
 		}
 	},
 };
