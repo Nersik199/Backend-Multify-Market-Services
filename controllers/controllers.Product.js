@@ -427,31 +427,55 @@ export default {
 		try {
 			const popularProducts = await Payments.findAll({
 				attributes: [
+					'productId',
 					[Sequelize.fn('COUNT', Sequelize.col('productId')), 'purchaseCount'],
 				],
-				include: [
-					{
-						model: Products,
-						attributes: [
-							'id',
-							'name',
-							'size',
-							'price',
-							'description',
-							'brandName',
-						],
-					},
-				],
-				group: ['payments.productId'],
+				group: ['productId'],
 				order: [[Sequelize.fn('COUNT', Sequelize.col('productId')), 'DESC']],
 				limit: 10,
 			});
 
-			if (popularProducts.length === 0) {
+			const productIds = popularProducts.map(item => item.productId);
+
+			const productsWithImages = await Products.findAll({
+				where: {
+					id: productIds,
+				},
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path'],
+					},
+				],
+			});
+
+			const formattedProducts = popularProducts.map(popular => {
+				const product = productsWithImages.find(
+					p => p.id === popular.productId
+				);
+				return {
+					product: {
+						purchaseCount: popular.dataValues.purchaseCount,
+						id: product.id,
+						name: product.name,
+						size: product.size,
+						price: product.price,
+						description: product.description,
+						brandName: product.brandName,
+						productImage:
+							product.productImage.length > 0
+								? product.productImage[0].path
+								: null,
+					},
+				};
+			});
+
+			if (formattedProducts.length === 0) {
 				return res.json({ message: 'No popular products' });
 			}
 
-			res.json({ data: popularProducts });
+			res.json({ data: formattedProducts });
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ success: false, message: error.message });
