@@ -413,6 +413,48 @@ export default {
 		}
 	},
 
+	async resendCode(req, res) {
+		try {
+			const { email } = req.body;
+
+			const user = await Users.findOne({ where: { email } });
+
+			if (!user) {
+				return res.status(404).json({ message: 'Wrong email address' });
+			}
+
+			if (user.status !== 'active') {
+				return res
+					.status(401)
+					.json({ message: 'Please activate your account' });
+			}
+
+			const resetCode = uuid().slice(0, 6);
+
+			await Users.update({ resetCode }, { where: { id: user.id } });
+
+			await sendMail({
+				to: user.email,
+				subject: 'Resend password reset code',
+				template: 'sendEmailCode',
+				templateData: {
+					fullName: `${user.firstName} ${user.lastName}`,
+					code1: resetCode[0],
+					code2: resetCode[1],
+					code3: resetCode[2],
+					code4: resetCode[3],
+					code5: resetCode[4],
+					code6: resetCode[5],
+				},
+			});
+
+			res.status(200).json({ message: 'Reset code sent successfully' });
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({ message: error.message });
+		}
+	},
+
 	async updatePassword(req, res) {
 		try {
 			const { newPassword, key } = req.body;
