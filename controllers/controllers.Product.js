@@ -55,7 +55,15 @@ export default {
 	},
 	async getProducts(req, res) {
 		try {
-			const total = await Products.count();
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
+			const total = await Products.count({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
+			});
 			const page = +req.query.page || 1;
 			const limit = +req.query.limit || 10;
 
@@ -66,6 +74,12 @@ export default {
 			}
 
 			const productsList = await Products.findAll({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
 				limit,
 				offset,
 				include: [
@@ -293,6 +307,7 @@ export default {
 	async getStoreAndProduct(req, res) {
 		try {
 			const { storeId } = req.params;
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
 			const page = +req.query.page || 1;
 			const limit = +req.query.limit || 10;
 
@@ -301,7 +316,15 @@ export default {
 				return res.status(404).json({ message: 'Store not found' });
 			}
 
-			const total = await Products.count({ where: { storeId } });
+			const total = await Products.count({
+				where: {
+					storeId,
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
+			});
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
 			if (page > maxPageCount) {
@@ -309,7 +332,13 @@ export default {
 			}
 
 			const productsList = await Products.findAll({
-				where: { storeId },
+				where: {
+					storeId,
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
 				limit,
 				offset,
 				include: [
@@ -326,6 +355,9 @@ export default {
 				message: 'Products and store details retrieved successfully',
 				store: { name: store.name, location: store.location },
 				products: productsList,
+				total,
+				currentPage: page,
+				maxPageCount,
 			});
 		} catch (error) {
 			return handleErrorResponse(

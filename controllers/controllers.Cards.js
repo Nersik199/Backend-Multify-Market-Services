@@ -95,7 +95,6 @@ export default {
 			});
 		}
 	},
-
 	async update(req, res) {
 		try {
 			const { cardId: id } = req.params;
@@ -158,6 +157,22 @@ export default {
 
 			res.status(200).json({
 				message: 'Cards deleted successfully.',
+			});
+		} catch (e) {
+			res.status(500).json({
+				message: 'Internal server error',
+				error: e.message,
+			});
+		}
+	},
+	async deleteAll(req, res) {
+		try {
+			const { id: userId } = req.user;
+
+			await Cards.destroy({ where: { userId } });
+
+			res.status(200).json({
+				message: 'All products removed from the cart successfully.',
 			});
 		} catch (e) {
 			res.status(500).json({

@@ -37,4 +37,12 @@ export default {
 	resetActivationKey: Joi.object({
 		email: Joi.string().email().required(),
 	}),
+
+	forgotPassword: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
+	}),
+
+	resendCode: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
+	}),
 };

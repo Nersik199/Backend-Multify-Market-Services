@@ -45,11 +45,21 @@ router.put(
 	controllers.changePassword
 );
 
-router.post('/forgot/password', controllers.forgotPassword);
+router.post(
+	'/forgot/password',
+	validate(userSchema.forgotPassword, 'body'),
+	controllers.forgotPassword
+);
 router.put(
 	'/update/password',
 	validate(userSchema.updatePassword, 'body'),
 	controllers.updatePassword
+);
+
+router.post(
+	'/resend-code',
+	validate(userSchema.resendCode, 'body'),
+	controllers.resendCode
 );
 
 export default router;
