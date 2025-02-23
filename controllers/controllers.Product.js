@@ -53,9 +53,15 @@ export default {
 			return handleErrorResponse(res, 500, 'Error fetching products', error);
 		}
 	},
+
 	async getProducts(req, res) {
 		try {
-			const { minPrice = 0, maxPrice = 1000000 } = req.query;
+			const {
+				minPrice = 0,
+				maxPrice = 1000000,
+				page = 1,
+				limit = 10,
+			} = req.query;
 			const total = await Products.count({
 				where: {
 					price: {
@@ -64,8 +70,6 @@ export default {
 					},
 				},
 			});
-			const page = +req.query.page || 1;
-			const limit = +req.query.limit || 10;
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -80,8 +84,6 @@ export default {
 						[Op.lte]: +maxPrice,
 					},
 				},
-				limit,
-				offset,
 				include: [
 					{
 						model: Photo,
@@ -95,6 +97,8 @@ export default {
 					},
 				],
 				order: [['createdAt', 'DESC']],
+				limit: +limit,
+				offset,
 			});
 
 			if (productsList.length === 0) {
@@ -112,6 +116,7 @@ export default {
 			return handleErrorResponse(res, 500, 'Error fetching products', error);
 		}
 	},
+
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;
@@ -239,11 +244,13 @@ export default {
 			return handleErrorResponse(res, 500, 'Error fetching product', error);
 		}
 	},
+
 	async getProductsByCategory(req, res) {
 		try {
 			const { categoryId } = req.params;
 			const page = +req.query.page || 1;
 			const limit = +req.query.limit || 10;
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
 
 			const category = await ProductCategories.findOne({
 				where: { categoryId },
@@ -267,6 +274,13 @@ export default {
 				include: [
 					{
 						model: Products,
+						where: {
+							price: {
+								[Op.gte]: minPrice,
+								[Op.lte]: maxPrice,
+							},
+						},
+						order: [['createdAt', 'DESC']],
 						include: [
 							{
 								model: Photo,
@@ -281,7 +295,6 @@ export default {
 						],
 					},
 				],
-				order: [[Products, 'createdAt', 'DESC']],
 			});
 
 			if (productsList.length === 0) {
