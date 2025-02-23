@@ -1,6 +1,13 @@
 import Cards from '../models/Cards.js';
 import Products from '../models/Products.js';
 import Photo from '../models/Photo.js';
+
+const calculatePagination = (page, limit, total) => {
+	const maxPageCount = Math.ceil(total / limit);
+	const offset = (page - 1) * limit;
+	return { maxPageCount, offset };
+};
+
 export default {
 	async create(req, res) {
 		try {
@@ -50,14 +57,12 @@ export default {
 			const { page = 1, limit = 10 } = req.query;
 
 			const total = await Cards.count({ where: { userId } });
-			const offset = (page - 1) * limit;
-			const maxPageCount = Math.ceil(total / limit);
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
 			if (page > maxPageCount) {
-				return res.status(404).json({
-					message: 'No cards found.',
-					cards: [],
-				});
+				res.status(404).json({ message: 'Page not found' });
+				return;
 			}
 
 			const cardsWithProducts = await Cards.findAll({

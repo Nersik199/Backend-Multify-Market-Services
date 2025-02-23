@@ -131,6 +131,7 @@ export default {
 			const { categoryId } = req.params;
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
 
 			const total = await ProductCategories.count({ where: { categoryId } });
 
@@ -162,6 +163,12 @@ export default {
 				include: [
 					{
 						model: Products,
+						where: {
+							price: {
+								[Op.gte]: minPrice,
+								[Op.lte]: maxPrice,
+							},
+						},
 						include: [
 							{
 								model: Stores,
@@ -356,7 +363,15 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const total = await Products.count();
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
+			const total = await Products.count({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
+			});
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -382,6 +397,12 @@ export default {
 			}
 
 			const products = await Products.findAll({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
 				include: [
 					{
 						model: Photo,
