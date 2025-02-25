@@ -565,6 +565,9 @@
                 },
                 "brandName": {
                   "example": "any"
+                },
+                "quantity": {
+                  "example": "any"
                 }
               }
             }
@@ -779,6 +782,9 @@
                 "brandName": {
                   "example": "any"
                 },
+                "quantity": {
+                  "example": "any"
+                },
                 "imageId": {
                   "example": "any"
                 }
@@ -792,6 +798,9 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           },
           "404": {
             "description": "Not Found"
@@ -1581,10 +1590,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "productId": {
-                  "example": "any"
-                },
-                "price": {
+                "products": {
                   "example": "any"
                 }
               }
@@ -1636,6 +1642,12 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
