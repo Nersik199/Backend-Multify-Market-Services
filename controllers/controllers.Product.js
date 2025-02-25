@@ -478,25 +478,24 @@ export default {
 				const product = productsWithDetails.find(
 					p => p.id === popular.productId
 				);
+
 				return {
-					product: {
-						purchaseCount: popular.dataValues.purchaseCount,
-						id: product.id,
-						name: product.name,
-						size: product.size,
-						price: product.price,
-						description: product.description,
-						brandName: product.brandName,
-						quantity: product.quantity,
-						productImage:
-							product.productImage.length > 0
-								? product.productImage[0].path
-								: null,
-						categories: product.categories.map(cat => ({
-							id: cat.category.id,
-							name: cat.category.name,
-						})),
-					},
+					purchaseCount: popular.dataValues.purchaseCount,
+					id: product.id,
+					name: product.name,
+					size: product.size,
+					price: product.price,
+					description: product.description,
+					brandName: product.brandName,
+					quantity: product.quantity,
+					productImage:
+						product.productImage.length > 0
+							? product.productImage[0].path
+							: null,
+					categories: product.categories.map(cat => ({
+						id: cat.category.id,
+						name: cat.category.name,
+					})),
 				};
 			});
 
@@ -504,7 +503,10 @@ export default {
 				return res.json({ message: 'No popular products' });
 			}
 
-			res.json(formattedProducts);
+			res.json({
+				message: 'Popular products successfully',
+				data: formattedProducts,
+			});
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ success: false, message: error.message });
