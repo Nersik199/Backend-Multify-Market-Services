@@ -29,6 +29,10 @@ ProductCategories.init(
 		timestamps: true,
 	}
 );
+Products.hasMany(ProductCategories, {
+	foreignKey: 'productId',
+	as: 'categories',
+});
 
 ProductCategories.belongsTo(Products, {
 	foreignKey: 'productId',
@@ -36,6 +40,7 @@ ProductCategories.belongsTo(Products, {
 });
 ProductCategories.belongsTo(Categories, {
 	foreignKey: 'categoryId',
+	as: 'category',
 	onDelete: 'cascade',
 });
 

@@ -43,7 +43,7 @@ export default {
 		try {
 			const { files = [] } = req;
 			const { categoryId } = req.params;
-			const { name, size, price, description, brandName } = req.body;
+			const { name, size, price, description, brandName, quantity } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -78,6 +78,7 @@ export default {
 				price,
 				description,
 				brandName,
+				quantity,
 				storeId: store.storeId,
 			});
 
@@ -450,70 +451,63 @@ export default {
 				price,
 				description,
 				brandName,
+				quantity,
 				imageId = null,
 			} = req.body;
 			const { id } = req.user;
-			const { files = null } = req;
+			const files = req.files || [];
 
 			const product = await Products.findOne({
-				where: { id: productId },
+				where: { id: Number(productId) },
 				include: [
-					{
-						model: Photo,
-						as: 'productImage',
-						attributes: ['path', 'id'],
-					},
+					{ model: Photo, as: 'productImage', attributes: ['path', 'id'] },
 				],
 			});
 
 			if (!product) {
-				res.status(404).json({
-					message: 'Product not found',
-				});
-				return;
+				return res.status(404).json({ message: 'Product not found' });
 			}
 
 			const user = await Users.findByPk(id);
-
-			if (user.role !== 'admin') {
-				return res.status(401).json({
-					message: 'You are not authorized to update this product',
-				});
+			if (!user || user.role !== 'admin') {
+				return res
+					.status(403)
+					.json({ message: 'You are not authorized to update this product' });
 			}
 
-			if (files && !imageId) {
-				for (const file of files) {
-					await Photo.create({
-						path: file.path,
-						productId: productId,
-					});
-				}
+			if (files.length && !imageId) {
+				await Promise.all(
+					files.map(file =>
+						Photo.create({ path: file.path, productId: product.id })
+					)
+				);
 			}
 
-			if (imageId && files) {
-				await updateImages(res, 'Product', files, imageId);
+			let imageUpdateResult = null;
+			if (imageId && files.length) {
+				imageUpdateResult = await updateImages('Product', files, imageId);
 			}
 
-			const productUpdate = await product.update({
+			await product.update({
 				name,
 				size,
+				quantity,
 				price,
 				description,
 				brandName,
 			});
 
-			res.status(200).json({
-				productUpdate,
-				message: 'Product updated successfully',
-			});
+			let response = { product, message: 'Product updated successfully' };
+			if (imageUpdateResult && !imageUpdateResult.success) {
+				response.imageMessage = imageUpdateResult.message;
+			}
+
+			return res.status(200).json(response);
 		} catch (error) {
-			console.log(error);
-			res.status(500).json({
-				message: 'Error updating product',
-			});
+			console.error(error);
+			return res.status(500).json({ message: 'Error updating product' });
 		}
 	},
-
 	deleteProduct: async (req, res) => {
 		try {
 			const { productId } = req.params;

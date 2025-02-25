@@ -1,40 +1,47 @@
 import { v2 as cloudinary } from 'cloudinary';
 import Photo from '../models/Photo.js';
 
-async function updateImages(res, folder, files, imageId) {
+async function updateImages(folder, files, imageId) {
 	try {
-		const ImgArr = imageId.split(',').map(id => id.trim());
+		const ImgArr = Array.isArray(imageId)
+			? imageId
+			: imageId.split(',').map(id => id.trim());
+		const fileArr = Array.isArray(files) ? files : [files];
 
-		if (ImgArr.length > 0 && files && files.length > 0) {
-			for (const id of ImgArr) {
-				const oldImage = await Photo.findOne({ where: { id } });
+		let notFoundImages = [];
 
-				if (!oldImage) {
-					for (const file of files) {
-						await cloudinary.uploader.destroy(file.filename);
-					}
-					res.status(400).json({
-						message: 'Images with the specified ID not found',
-					});
-					return;
-				}
+		for (let i = 0; i < ImgArr.length; i++) {
+			const id = ImgArr[i];
+			const file = fileArr[i] || fileArr[0];
 
-				const fileName = `${folder}/${oldImage.path
-					.split('/')
-					.pop()
-					.split('.')
-					.slice(0, -1)
-					.join('.')}`;
+			const oldImage = await Photo.findOne({ where: { id } });
 
-				await cloudinary.uploader.destroy(fileName);
-
-				for (const file of files) {
-					await Photo.update({ path: file.path }, { where: { id } });
-				}
+			if (!oldImage) {
+				notFoundImages.push(id);
+				continue;
 			}
+
+			const fileName = `${folder}/${oldImage.path
+				.split('/')
+				.pop()
+				.split('.')
+				.slice(0, -1)
+				.join('.')}`;
+			await cloudinary.uploader.destroy(fileName);
+			await Photo.update({ path: file.path }, { where: { id } });
 		}
+
+		if (notFoundImages.length) {
+			return {
+				success: false,
+				message: `Images not found: ${notFoundImages.join(', ')}`,
+			};
+		}
+
+		return { success: true, message: 'Images updated successfully' };
 	} catch (error) {
 		console.error('Error updating images:', error);
+		return { success: false, message: 'Error updating images' };
 	}
 }
 

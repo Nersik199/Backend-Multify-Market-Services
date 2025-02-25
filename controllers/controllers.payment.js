@@ -12,24 +12,46 @@ const calculatePagination = (page, limit, total) => {
 export default {
 	async payment(req, res) {
 		try {
-			const { productId: id, price } = req.body;
+			const { products } = req.body;
 			const userId = req.user.id;
 
-			if (!id || !price) {
-				return res
-					.status(400)
-					.json({ message: 'Product ID and price are required' });
+			if (!products || !Array.isArray(products) || products.length === 0) {
+				return res.status(400).json({ message: 'Products array is required' });
 			}
 
-			const product = await Products.findByPk(id);
+			let totalPrice = 0;
+			const productDetails = [];
 
-			if (!product) {
-				return res.status(404).json({ message: 'Product not found' });
+			for (const item of products) {
+				const { productId, quantity } = item;
+
+				if (!productId || !quantity || quantity <= 0) {
+					return res.status(400).json({ message: 'Invalid product data' });
+				}
+
+				const product = await Products.findByPk(productId);
+
+				if (!product) {
+					return res
+						.status(404)
+						.json({ message: `Product with ID ${productId} not found` });
+				}
+
+				const totalProductPrice = parseFloat(product.price) * quantity;
+				totalPrice += totalProductPrice;
+
+				productDetails.push({
+					productId,
+					quantity,
+					price: product.price,
+					name: product.name,
+					totalProductPrice,
+				});
 			}
 
 			const payment = await yookassa.createPayment({
 				amount: {
-					value: price,
+					value: totalPrice.toFixed(2),
 					currency: 'RUB',
 				},
 				payment_method_data: {
@@ -39,16 +61,19 @@ export default {
 					type: 'redirect',
 					return_url: process.env.FRONT_URL,
 				},
-				description: `Оплата за товар ${product.dataValues.name}`,
+				description: `Оплата за ${productDetails.length} товаров`,
 			});
 
-			await Payments.create({
-				userId,
-				productId: id,
-				amount: price,
-				paymentId: payment.id,
-				transactionId: payment.id,
-			});
+			for (const product of productDetails) {
+				await Payments.create({
+					userId,
+					productId: product.productId,
+					amount: product.totalProductPrice,
+					quantity: product.quantity,
+					paymentId: payment.id,
+					transactionId: payment.id,
+				});
+			}
 
 			res.status(201).json({ payment });
 		} catch (error) {
@@ -56,6 +81,7 @@ export default {
 			res.status(500).json({ error: error.message });
 		}
 	},
+
 	async getEvent(req, res) {
 		try {
 			const { event, object } = req.body;
@@ -79,10 +105,38 @@ export default {
 			}
 
 			if (event === 'payment.succeeded') {
+				const payment = await Payments.findOne({
+					where: { transactionId: object.id },
+				});
+
+				if (!payment) {
+					console.error('Платеж не найден');
+					return res.sendStatus(404);
+				}
+
+				const product = await Products.findByPk(payment.productId);
+
+				if (!product) {
+					console.error('Продукт не найден');
+					return res.sendStatus(404);
+				}
+
+				if (product.quantity < payment.quantity) {
+					return res
+						.status(400)
+						.json({ error: 'Недостаточно товара на складе' });
+				}
+
+				await Products.update(
+					{ quantity: product.quantity - payment.quantity },
+					{ where: { id: product.id } }
+				);
+
 				await Payments.update(
 					{ status: 'paid' },
 					{ where: { transactionId: object.id } }
 				);
+
 				return res.sendStatus(200);
 			}
 
@@ -116,7 +170,7 @@ export default {
 
 			const payments = await Payments.findAll({
 				where: { userId: id },
-				attributes: ['amount', 'status', 'createdAt', 'updatedAt'],
+				attributes: ['amount', 'status', 'quantity', 'createdAt', 'updatedAt'],
 				include: [
 					{
 						model: Products,
