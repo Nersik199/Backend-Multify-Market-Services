@@ -33,6 +33,10 @@ Payments.init(
 			type: DataTypes.STRING,
 			allowNull: false,
 		},
+		quantity: {
+			type: DataTypes.INTEGER.UNSIGNED,
+			allowNull: false,
+		},
 	},
 	{
 		sequelize,

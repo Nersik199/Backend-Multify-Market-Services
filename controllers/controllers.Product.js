@@ -6,6 +6,7 @@ import Users from '../models/Users.js';
 import Reviews from '../models/Reviews.js';
 import Comments from '../models/Comments.js';
 import Payments from '../models/Payments.js';
+import Categories from '../models/Categories.js';
 import { Op, Sequelize } from 'sequelize';
 
 const calculatePagination = (page, limit, total) => {
@@ -196,6 +197,7 @@ export default {
 					description: product.description,
 					price: product.price,
 					size: product.size,
+					quantity: product.quantity,
 					images: product.productImage
 						? product.productImage.map(image => ({
 								id: image.id,
@@ -450,21 +452,30 @@ export default {
 
 			const productIds = popularProducts.map(item => item.productId);
 
-			const productsWithImages = await Products.findAll({
-				where: {
-					id: productIds,
-				},
+			const productsWithDetails = await Products.findAll({
+				where: { id: productIds },
 				include: [
 					{
 						model: Photo,
 						as: 'productImage',
 						attributes: ['path'],
 					},
+					{
+						model: ProductCategories,
+						as: 'categories',
+						include: [
+							{
+								model: Categories,
+								as: 'category',
+								attributes: ['id', 'name'],
+							},
+						],
+					},
 				],
 			});
 
 			const formattedProducts = popularProducts.map(popular => {
-				const product = productsWithImages.find(
+				const product = productsWithDetails.find(
 					p => p.id === popular.productId
 				);
 				return {
@@ -476,10 +487,15 @@ export default {
 						price: product.price,
 						description: product.description,
 						brandName: product.brandName,
+						quantity: product.quantity,
 						productImage:
 							product.productImage.length > 0
 								? product.productImage[0].path
 								: null,
+						categories: product.categories.map(cat => ({
+							id: cat.category.id,
+							name: cat.category.name,
+						})),
 					},
 				};
 			});
@@ -488,7 +504,7 @@ export default {
 				return res.json({ message: 'No popular products' });
 			}
 
-			res.json({ data: formattedProducts });
+			res.json(formattedProducts);
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ success: false, message: error.message });
