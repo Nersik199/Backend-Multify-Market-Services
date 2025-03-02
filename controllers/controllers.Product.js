@@ -95,6 +95,13 @@ export default {
 						model: Stores,
 						as: 'store',
 						attributes: ['name'],
+						include: [
+							{
+								model: Photo,
+								as: 'storeLogo',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 				],
 				order: [['createdAt', 'DESC']],
@@ -156,6 +163,13 @@ export default {
 						model: Stores,
 						as: 'store',
 						attributes: ['name'],
+						include: [
+							{
+								model: Photo,
+								as: 'storeLogo',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 					{
 						model: Reviews,
@@ -208,6 +222,12 @@ export default {
 						? {
 								id: product.store.id,
 								name: product.store.name,
+								logo: product.store.storeLogo
+									? product.store.storeLogo.map(image => ({
+											id: image.id,
+											logo: image.path,
+									  }))
+									: [],
 						  }
 						: null,
 				},
@@ -293,6 +313,13 @@ export default {
 								model: Stores,
 								as: 'store',
 								attributes: ['name'],
+								include: [
+									{
+										model: Photo,
+										as: 'storeLogo',
+										attributes: ['id', 'path'],
+									},
+								],
 							},
 						],
 					},
@@ -326,7 +353,17 @@ export default {
 			const page = +req.query.page || 1;
 			const limit = +req.query.limit || 10;
 
-			const store = await Stores.findOne({ where: { id: storeId } });
+			const store = await Stores.findOne({
+				where: { id: storeId },
+				attributes: ['id', 'name', 'location'],
+				include: [
+					{
+						model: Photo,
+						as: 'storeLogo',
+						attributes: ['id', 'path'],
+					},
+				],
+			});
 			if (!store) {
 				return res.status(404).json({ message: 'Store not found' });
 			}
@@ -368,7 +405,7 @@ export default {
 
 			return res.status(200).json({
 				message: 'Products and store details retrieved successfully',
-				store: { name: store.name, location: store.location },
+				store,
 				products: productsList,
 				total,
 				currentPage: page,
@@ -386,17 +423,29 @@ export default {
 
 	async searchProduct(req, res) {
 		try {
-			const { s } = req.query;
-			const page = +req.query.page || 1;
-			const limit = +req.query.limit || 10;
+			const {
+				s = '',
+				minPrice = 0,
+				maxPrice = 100000,
+				page = 1,
+				limit = 10,
+			} = req.query;
 
-			if (!s) {
-				return res.status(400).json({ message: 'Search query is required' });
+			const whereClause = {};
+
+			if (s) {
+				whereClause.name = { [Op.like]: `%${s}%` };
 			}
 
-			const total = await Products.count({
-				where: { name: { [Op.like]: `%${s}%` } },
-			});
+			if (minPrice && maxPrice) {
+				whereClause.price = { [Op.between]: [+minPrice, +maxPrice] };
+			} else if (minPrice) {
+				whereClause.price = { [Op.gte]: +minPrice };
+			} else if (maxPrice) {
+				whereClause.price = { [Op.lte]: +maxPrice };
+			}
+
+			const total = await Products.count({ where: whereClause });
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -405,7 +454,7 @@ export default {
 			}
 
 			const productsList = await Products.findAll({
-				where: { name: { [Op.like]: `%${s}%` } },
+				where: whereClause,
 				limit,
 				offset,
 				include: [
@@ -418,15 +467,20 @@ export default {
 						model: Stores,
 						as: 'store',
 						attributes: ['name'],
+						include: [
+							{
+								model: Photo,
+								as: 'storeLogo',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 				],
 				order: [['createdAt', 'DESC']],
 			});
 
 			if (productsList.length === 0) {
-				return res
-					.status(404)
-					.json({ message: 'No products found matching your query' });
+				return res.status(404).json({ message: 'No products found' });
 			}
 
 			return res.status(200).json({
@@ -459,6 +513,18 @@ export default {
 						model: Photo,
 						as: 'productImage',
 						attributes: ['path'],
+					},
+					{
+						model: Stores,
+						as: 'store',
+						attributes: ['name'],
+						include: [
+							{
+								model: Photo,
+								as: 'storeLogo',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 					{
 						model: ProductCategories,
@@ -495,6 +561,11 @@ export default {
 					categories: product.categories.map(cat => ({
 						id: cat.category.id,
 						name: cat.category.name,
+					})),
+
+					store: product.store.storeLogo.map(stor => ({
+						id: stor.name,
+						logo: stor.path,
 					})),
 				};
 			});
