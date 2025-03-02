@@ -488,11 +488,6 @@ export default {
 	async deleteUser(req, res) {
 		try {
 			const { email } = req.body;
-			console.log(11111111);
-
-			if (!email) {
-				return res.status(400).json({ message: 'Email is required' });
-			}
 
 			const user = await Users.findOne({ where: { email } });
 
