@@ -484,4 +484,33 @@ export default {
 			res.status(500).json({ message: error.message });
 		}
 	},
+
+	async deleteUser(req, res) {
+		try {
+			const { email } = req.body;
+			console.log(11111111);
+
+			if (!email) {
+				return res.status(400).json({ message: 'Email is required' });
+			}
+
+			const user = await Users.findOne({ where: { email } });
+
+			if (!user) {
+				return res.status(404).json({ message: 'User not found' });
+			}
+
+			if (user.status !== 'pending') {
+				return res
+					.status(400)
+					.json({ message: 'User has already activated their account' });
+			}
+
+			await Users.destroy({ where: { email } });
+			return res.json({ message: 'User deleted successfully' });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ message: 'Server error' });
+		}
+	},
 };

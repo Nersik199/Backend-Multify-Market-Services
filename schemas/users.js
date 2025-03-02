@@ -45,4 +45,8 @@ export default {
 	resendCode: Joi.object({
 		email: Joi.string().email().min(3).max(50).required(),
 	}),
+
+	delateUser: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
+	}),
 };

@@ -62,4 +62,10 @@ router.post(
 	controllers.resendCode
 );
 
+router.delete(
+	'/delete-user',
+	validate(userSchema.delateUser, 'body'),
+	controllers.deleteUser
+);
+
 export default router;
