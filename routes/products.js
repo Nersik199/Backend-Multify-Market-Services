@@ -10,17 +10,22 @@ const router = Router();
 router.get('/stores', controllers.getStores);
 router.get(
 	'/list',
-	validate(productSchema.getProducts, 'query'),
-	controllers.getProducts
+	validate(productSchema.getProductsSearch, 'query'),
+	controllers.searchProduct
 );
-router.get('/search', controllers.searchProduct);
 router.get('/popular', controllers.getMostPopularProducts);
 router.get('/:id', controllers.getProductById);
 router.get(
 	'/list/:categoryId',
-	validate(productSchema.getProducts, 'query'),
+	validate(productSchema.getProductsByCategory, 'query'),
 	controllers.getProductsByCategory
 );
-router.get('/store/:storeId', controllers.getStoreAndProduct);
 
+// router.get('/store/:storeId', controllers.getStoreAndProduct);
+
+// router.get(
+// 	'/list',
+// 	validate(productSchema.getProducts, 'query'),
+// 	controllers.getProducts
+// );
 export default router;

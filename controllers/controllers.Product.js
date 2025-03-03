@@ -55,76 +55,6 @@ export default {
 		}
 	},
 
-	async getProducts(req, res) {
-		try {
-			const {
-				minPrice = 0,
-				maxPrice = 1000000,
-				page = 1,
-				limit = 10,
-			} = req.query;
-			const total = await Products.count({
-				where: {
-					price: {
-						[Op.gte]: +minPrice,
-						[Op.lte]: +maxPrice,
-					},
-				},
-			});
-
-			const { maxPageCount, offset } = calculatePagination(page, limit, total);
-
-			if (page > maxPageCount) {
-				return res.status(404).json({ message: 'Product does not exist' });
-			}
-
-			const productsList = await Products.findAll({
-				where: {
-					price: {
-						[Op.gte]: +minPrice,
-						[Op.lte]: +maxPrice,
-					},
-				},
-				include: [
-					{
-						model: Photo,
-						as: 'productImage',
-						attributes: ['id', 'path'],
-					},
-					{
-						model: Stores,
-						as: 'store',
-						attributes: ['name'],
-						include: [
-							{
-								model: Photo,
-								as: 'storeLogo',
-								attributes: ['id', 'path'],
-							},
-						],
-					},
-				],
-				order: [['createdAt', 'DESC']],
-				limit: +limit,
-				offset,
-			});
-
-			if (productsList.length === 0) {
-				return res.status(404).json({ message: 'No products found' });
-			}
-
-			return res.status(200).json({
-				message: 'Products retrieved successfully',
-				products: productsList,
-				total,
-				currentPage: page,
-				maxPageCount,
-			});
-		} catch (error) {
-			return handleErrorResponse(res, 500, 'Error fetching products', error);
-		}
-	},
-
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;
@@ -346,87 +276,14 @@ export default {
 		}
 	},
 
-	async getStoreAndProduct(req, res) {
-		try {
-			const { storeId } = req.params;
-			const { minPrice = 0, maxPrice = 1000000 } = req.query;
-			const page = +req.query.page || 1;
-			const limit = +req.query.limit || 10;
-
-			const store = await Stores.findOne({
-				where: { id: storeId },
-				attributes: ['id', 'name', 'location'],
-				include: [
-					{
-						model: Photo,
-						as: 'storeLogo',
-						attributes: ['id', 'path'],
-					},
-				],
-			});
-			if (!store) {
-				return res.status(404).json({ message: 'Store not found' });
-			}
-
-			const total = await Products.count({
-				where: {
-					storeId,
-					price: {
-						[Op.gte]: +minPrice,
-						[Op.lte]: +maxPrice,
-					},
-				},
-			});
-			const { maxPageCount, offset } = calculatePagination(page, limit, total);
-
-			if (page > maxPageCount) {
-				return res.status(404).json({ message: 'Page not found' });
-			}
-
-			const productsList = await Products.findAll({
-				where: {
-					storeId,
-					price: {
-						[Op.gte]: +minPrice,
-						[Op.lte]: +maxPrice,
-					},
-				},
-				limit,
-				offset,
-				include: [
-					{
-						model: Photo,
-						as: 'productImage',
-						attributes: ['id', 'path'],
-					},
-				],
-				order: [['createdAt', 'DESC']],
-			});
-
-			return res.status(200).json({
-				message: 'Products and store details retrieved successfully',
-				store,
-				products: productsList,
-				total,
-				currentPage: page,
-				maxPageCount,
-			});
-		} catch (error) {
-			return handleErrorResponse(
-				res,
-				500,
-				'Error fetching store and products',
-				error
-			);
-		}
-	},
-
 	async searchProduct(req, res) {
 		try {
 			const {
 				s = '',
 				minPrice = 0,
 				maxPrice = 100000,
+				storeId,
+				categoryId,
 				page = 1,
 				limit = 10,
 			} = req.query;
@@ -445,7 +302,23 @@ export default {
 				whereClause.price = { [Op.lte]: +maxPrice };
 			}
 
-			const total = await Products.count({ where: whereClause });
+			if (storeId) {
+				whereClause.storeId = storeId;
+			}
+
+			const total = await Products.count({
+				where: whereClause,
+				include: categoryId
+					? [
+							{
+								model: ProductCategories,
+								as: 'categories',
+								where: { categoryId },
+								required: true,
+							},
+					  ]
+					: [],
+			});
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -455,7 +328,7 @@ export default {
 
 			const productsList = await Products.findAll({
 				where: whereClause,
-				limit,
+				limit: +limit,
 				offset,
 				include: [
 					{
@@ -475,6 +348,13 @@ export default {
 							},
 						],
 					},
+					{
+						model: ProductCategories,
+						as: 'categories',
+						required: !!categoryId,
+						where: categoryId ? { categoryId } : undefined,
+						attributes: ['categoryId'],
+					},
 				],
 				order: [['createdAt', 'DESC']],
 			});
@@ -485,7 +365,10 @@ export default {
 
 			return res.status(200).json({
 				message: 'Search results retrieved successfully',
-				products: productsList,
+				productsList,
+				total,
+				currentPage: page,
+				maxPageCount,
 			});
 		} catch (error) {
 			return handleErrorResponse(res, 500, 'Error searching products', error);
@@ -501,7 +384,7 @@ export default {
 				],
 				group: ['productId'],
 				order: [[Sequelize.fn('COUNT', Sequelize.col('productId')), 'DESC']],
-				limit: 10,
+				limit: 12,
 			});
 
 			const productIds = popularProducts.map(item => item.productId);
@@ -583,4 +466,149 @@ export default {
 			res.status(500).json({ success: false, message: error.message });
 		}
 	},
+
+	// async getStoreAndProduct(req, res) {
+	// 	try {
+	// 		const { storeId } = req.params;
+	// 		const { minPrice = 0, maxPrice = 1000000 } = req.query;
+	// 		const page = +req.query.page || 1;
+	// 		const limit = +req.query.limit || 10;
+
+	// 		const store = await Stores.findOne({
+	// 			where: { id: storeId },
+	// 			attributes: ['id', 'name', 'location'],
+	// 			include: [
+	// 				{
+	// 					model: Photo,
+	// 					as: 'storeLogo',
+	// 					attributes: ['id', 'path'],
+	// 				},
+	// 			],
+	// 		});
+	// 		if (!store) {
+	// 			return res.status(404).json({ message: 'Store not found' });
+	// 		}
+
+	// 		const total = await Products.count({
+	// 			where: {
+	// 				storeId,
+	// 				price: {
+	// 					[Op.gte]: +minPrice,
+	// 					[Op.lte]: +maxPrice,
+	// 				},
+	// 			},
+	// 		});
+	// 		const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+	// 		if (page > maxPageCount) {
+	// 			return res.status(404).json({ message: 'Page not found' });
+	// 		}
+
+	// 		const productsList = await Products.findAll({
+	// 			where: {
+	// 				storeId,
+	// 				price: {
+	// 					[Op.gte]: +minPrice,
+	// 					[Op.lte]: +maxPrice,
+	// 				},
+	// 			},
+	// 			limit,
+	// 			offset,
+	// 			include: [
+	// 				{
+	// 					model: Photo,
+	// 					as: 'productImage',
+	// 					attributes: ['id', 'path'],
+	// 				},
+	// 			],
+	// 			order: [['createdAt', 'DESC']],
+	// 		});
+
+	// 		return res.status(200).json({
+	// 			message: 'Products and store details retrieved successfully',
+	// 			store,
+	// 			products: productsList,
+	// 			total,
+	// 			currentPage: page,
+	// 			maxPageCount,
+	// 		});
+	// 	} catch (error) {
+	// 		return handleErrorResponse(
+	// 			res,
+	// 			500,
+	// 			'Error fetching store and products',
+	// 			error
+	// 		);
+	// 	}
+	// },
+
+	// async getProducts(req, res) {
+	// 	try {
+	// 		const {
+	// 			minPrice = 0,
+	// 			maxPrice = 1000000,
+	// 			page = 1,
+	// 			limit = 10,
+	// 		} = req.query;
+	// 		const total = await Products.count({
+	// 			where: {
+	// 				price: {
+	// 					[Op.gte]: +minPrice,
+	// 					[Op.lte]: +maxPrice,
+	// 				},
+	// 			},
+	// 		});
+
+	// 		const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+	// 		if (page > maxPageCount) {
+	// 			return res.status(404).json({ message: 'Product does not exist' });
+	// 		}
+
+	// 		const productsList = await Products.findAll({
+	// 			where: {
+	// 				price: {
+	// 					[Op.gte]: +minPrice,
+	// 					[Op.lte]: +maxPrice,
+	// 				},
+	// 			},
+	// 			include: [
+	// 				{
+	// 					model: Photo,
+	// 					as: 'productImage',
+	// 					attributes: ['id', 'path'],
+	// 				},
+	// 				{
+	// 					model: Stores,
+	// 					as: 'store',
+	// 					attributes: ['name'],
+	// 					include: [
+	// 						{
+	// 							model: Photo,
+	// 							as: 'storeLogo',
+	// 							attributes: ['id', 'path'],
+	// 						},
+	// 					],
+	// 				},
+	// 			],
+	// 			order: [['createdAt', 'DESC']],
+	// 			limit: +limit,
+	// 			offset,
+	// 		});
+
+	// 		if (productsList.length === 0) {
+	// 			return res.status(404).json({ message: 'No products found' });
+	// 		}
+
+	// 		return res.status(200).json({
+	// 			message: 'Products retrieved successfully',
+	// 			products: productsList,
+	// 			total,
+	// 			currentPage: page,
+	// 			maxPageCount,
+	// 		});
+	// 	} catch (error) {
+	// 		return handleErrorResponse(res, 500, 'Error fetching products', error);
+	// 	}
+	// },
 };

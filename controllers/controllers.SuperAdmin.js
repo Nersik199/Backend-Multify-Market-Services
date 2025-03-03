@@ -138,4 +138,12 @@ export default {
 			});
 		}
 	},
+
+	//get all user and admin or user
+	//delate store
+	//delate admin
+	//delate user
+	//get statistic
+	//update logo store
+	// get tranzaktions for store
 };
