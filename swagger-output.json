@@ -993,12 +993,27 @@
         "description": "",
         "parameters": [
           {
+            "name": "s",
+            "in": "query",
+            "type": "string"
+          },
+          {
             "name": "minPrice",
             "in": "query",
             "type": "string"
           },
           {
             "name": "maxPrice",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "storeId",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "categoryId",
             "in": "query",
             "type": "string"
           },
@@ -1022,46 +1037,6 @@
           },
           "422": {
             "description": "Unprocessable Entity"
-          }
-        }
-      }
-    },
-    "/products/search": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "s",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "minPrice",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "maxPrice",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }
@@ -1163,47 +1138,6 @@
           },
           "422": {
             "description": "Unprocessable Entity"
-          }
-        }
-      }
-    },
-    "/products/store/{storeId}": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "storeId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "minPrice",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "maxPrice",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
           }
         }
       }

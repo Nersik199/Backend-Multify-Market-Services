@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import jwt from 'jsonwebtoken';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
-
+//akcia category nkarner  statistika logo
 import { sendMail } from '../services/Mail.js';
 
 export default {
@@ -174,6 +174,7 @@ export default {
 			});
 		}
 	},
+
 	async login(req, res) {
 		try {
 			const { email, password } = req.body;
@@ -347,6 +348,7 @@ export default {
 			});
 		}
 	},
+
 	async changePassword(req, res) {
 		try {
 			const { id } = req.user;
@@ -488,11 +490,6 @@ export default {
 	async deleteUser(req, res) {
 		try {
 			const { email } = req.body;
-			console.log(11111111);
-
-			if (!email) {
-				return res.status(400).json({ message: 'Email is required' });
-			}
 
 			const user = await Users.findOne({ where: { email } });
 

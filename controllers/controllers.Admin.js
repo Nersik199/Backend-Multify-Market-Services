@@ -508,6 +508,7 @@ export default {
 			return res.status(500).json({ message: 'Error updating product' });
 		}
 	},
+
 	deleteProduct: async (req, res) => {
 		try {
 			const { productId } = req.params;
