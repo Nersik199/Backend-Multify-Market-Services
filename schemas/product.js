@@ -15,5 +15,6 @@ export default {
 		minPrice: Joi.number().integer().min(0).max(10000000).optional(),
 		storeId: Joi.number().integer().optional(),
 		categoryId: Joi.number().integer().optional(),
+		s: Joi.string().optional(),
 	}),
 };
