@@ -7,7 +7,8 @@ import Reviews from '../models/Reviews.js';
 import Comments from '../models/Comments.js';
 import Payments from '../models/Payments.js';
 import Categories from '../models/Categories.js';
-import { Op, Sequelize } from 'sequelize';
+import Discounts from '../models/Discounts.js';
+import { Op, Sequelize, where } from 'sequelize';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -464,6 +465,97 @@ export default {
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ success: false, message: error.message });
+		}
+	},
+
+	async getDiscounts(req, res) {
+		try {
+			const limit = Math.max(1, Number(req.query.limit) || 10);
+			const page = Math.max(1, Number(req.query.page) || 1);
+			const storeId = req.query.storeId ? Number(req.query.storeId) : null;
+
+			const storeFilter = storeId ? { id: storeId } : {};
+
+			const total = await Discounts.count({
+				include: [
+					{
+						model: Products,
+						where: storeId ? { storeId } : {},
+					},
+				],
+				distinct: true,
+			});
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				return res.status(404).json({ message: 'Page not found' });
+			}
+
+			const discountedProducts = await Products.findAll({
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['id', 'path'],
+					},
+					{
+						model: Discounts,
+						required: true,
+						where: {
+							endDate: { [Op.gt]: new Date() },
+						},
+						attributes: [
+							'id',
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
+					},
+					{
+						model: Stores,
+						attributes: ['id', 'name'],
+						where: storeFilter,
+						include: [
+							{
+								model: Photo,
+								as: 'storeLogo',
+								attributes: ['id', 'path'],
+							},
+						],
+					},
+				],
+				limit,
+				offset,
+			});
+
+			if (discountedProducts.length === 0) {
+				return res.status(404).json({ message: 'No discounted found' });
+			}
+
+			return res.json({
+				discounts: discountedProducts,
+				total,
+				currentPage: page,
+				maxPageCount,
+			});
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({ message: 'Ошибка сервера' });
+		}
+	},
+
+	async removeExpiredDiscounts() {
+		try {
+			const result = await Discounts.destroy({
+				where: {
+					endDate: { [Op.lt]: '2025-03-07T00:00:00.000Z' },
+				},
+			});
+			console.log(`[CRON] Removed ${result} expired discounts`);
+		} catch (error) {
+			console.error('[CRON] Error removing discounts:', error);
 		}
 	},
 

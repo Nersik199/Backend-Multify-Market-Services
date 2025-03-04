@@ -9,6 +9,7 @@ import Reviews from './models/Reviews.js';
 import Comments from './models/Comments.js';
 import Cards from './models/Cards.js';
 import Payments from './models/Payments.js';
+import Discounts from './models/Discounts.js';
 
 const models = [
 	Users,
@@ -22,6 +23,7 @@ const models = [
 	Comments,
 	Cards,
 	Payments,
+	Discounts,
 ];
 
 (async () => {

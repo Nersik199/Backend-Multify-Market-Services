@@ -10,6 +10,7 @@ import ProductCategories from '../models/ProductCategories.js';
 import StoreAdmin from '../models/StoreAdmin.js';
 import Reviews from '../models/Reviews.js';
 import Comments from '../models/Comments.js';
+import Discounts from '../models/Discounts.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
@@ -630,6 +631,59 @@ export default {
 			res.status(500).json({
 				message: 'Error fetching products',
 			});
+		}
+	},
+
+	async discount(req, res) {
+		try {
+			const { productId, discountPercentage, startDate, endDate } = req.body;
+			const { id } = req.user;
+
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
+			if (!store) {
+				return res.status(404).json({ message: 'Store not found' });
+			}
+
+			const product = await Products.findByPk(productId);
+			if (!product) {
+				return res.status(404).json({ message: 'Product not found' });
+			}
+
+			const discountPrice = (product.price * (100 - discountPercentage)) / 100;
+
+			const existingDiscount = await Discounts.findOne({
+				where: { productId },
+			});
+
+			if (existingDiscount) {
+				await existingDiscount.update({
+					storeId: store.storeId,
+					discountPercentage,
+					discountPrice,
+					startDate: startDate || existingDiscount.startDate,
+					endDate: endDate || existingDiscount.endDate,
+				});
+
+				return res.json({
+					message: 'Discount updated',
+					discount: existingDiscount,
+				});
+			}
+
+			const newDiscount = await Discounts.create({
+				storeId: store.storeId,
+				productId,
+				discountPercentage,
+				discountPrice,
+				startDate: startDate || new Date(),
+				endDate:
+					endDate || new Date(new Date().setDate(new Date().getDate() + 7)),
+			});
+
+			return res.json({ message: 'Discount created', discount: newDiscount });
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({ message });
 		}
 	},
 

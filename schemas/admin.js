@@ -20,4 +20,11 @@ export default {
 		brandName: Joi.string().required(),
 		quantity: Joi.number().required(),
 	}),
+
+	discountSchema: Joi.object({
+		productId: Joi.number().integer().positive().required(),
+		discountPercentage: Joi.number().positive().max(100).required(),
+		startDate: Joi.date().greater('now').required(),
+		endDate: Joi.date().greater(Joi.ref('startDate')).required(),
+	}),
 };
