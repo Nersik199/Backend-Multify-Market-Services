@@ -31,6 +31,14 @@ router.put(
 );
 router.get('/search', checkToken, controllers.searchStoreProduct);
 
+router.post(
+	'/discount',
+	checkToken,
+	validate(adminSchema.discountSchema, 'body'),
+	controllers.discount
+);
+
 router.delete('/product/:productId', checkToken, controllers.deleteProduct);
 router.delete('/image/:imageId', checkToken, controllers.delateImage);
+
 export default router;
