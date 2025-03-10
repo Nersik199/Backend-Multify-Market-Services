@@ -39,3 +39,14 @@ Stores.belongsTo(Users, {
 });
 
 export default Stores;
+
+// Building materials
+// Construction chemicals
+// Electrical equipment
+// Insulation materials
+// Finishing materials
+// Plumbing
+// Ventilation and air conditioning
+// Windows and doors
+// Power tools
+// Hand tools
