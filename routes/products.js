@@ -23,13 +23,13 @@ router.get(
 	controllers.getProductsByCategory
 );
 
-// cron.schedule('0 0 * * *', async () => {
-// 	try {
-// 		await controllers.removeExpiredDiscounts();
-// 	} catch (error) {
-// 		console.error('[CRON] Error removing expired discounts:', error);
-// 	}
-// });
+cron.schedule('0 0 * * *', async () => {
+	try {
+		await controllers.removeExpiredDiscounts();
+	} catch (error) {
+		console.error('[CRON] Error removing expired discounts:', error);
+	}
+});
 
 // router.get('/store/:storeId', controllers.getStoreAndProduct);
 
