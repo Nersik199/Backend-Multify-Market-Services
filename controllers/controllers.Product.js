@@ -323,10 +323,6 @@ export default {
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
-			if (page > maxPageCount) {
-				return res.status(404).json({ message: 'Page not found' });
-			}
-
 			const productsList = await Products.findAll({
 				where: whereClause,
 				limit: +limit,
@@ -360,13 +356,9 @@ export default {
 				order: [['createdAt', 'DESC']],
 			});
 
-			if (productsList.length === 0) {
-				return res.status(404).json({ message: 'No products found' });
-			}
-
 			return res.status(200).json({
 				message: 'Search results retrieved successfully',
-				productsList,
+				productsList: productsList || [],
 				total,
 				currentPage: page,
 				maxPageCount,

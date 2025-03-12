@@ -1,9 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuid } from 'uuid';
-import jwt from 'jsonwebtoken';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
-//akcia category nkarner  statistika logo
 import { sendMail } from '../services/Mail.js';
 
 export default {
@@ -12,73 +10,83 @@ export default {
 			const { firstName, lastName, email, password, gender, dateOfBirth } =
 				req.body;
 			const { file = null } = req;
-			const mailExists = await Users.findOne({
-				where: { email },
-			});
+			const transaction = await Users.sequelize.transaction();
 
-			if (mailExists) {
-				if (file) {
-					await cloudinary.uploader.destroy(file.filename);
+			try {
+				const mailExists = await Users.findOne({
+					where: { email },
+					transaction,
+				});
+
+				if (mailExists) {
+					if (file) {
+						await cloudinary.uploader.destroy(file.filename);
+					}
+					await transaction.rollback();
+					return res.status(409).json({
+						message: 'Email already exists',
+						status: mailExists.status,
+					});
 				}
-				return res.status(409).json({
-					message: 'Email already exists',
-				});
-			}
-			const user = await Users.create({
-				firstName,
-				lastName,
-				gender,
-				dateOfBirth,
-				email: email.toLowerCase(),
-				password: password.trim(),
-			});
 
-			if (file) {
-				await Photo.create({
-					path: file.path,
-					userId: user.id,
-				});
-			}
-
-			const result = await Users.findByPk(user.id, {
-				include: [
+				const user = await Users.create(
 					{
-						model: Photo,
-						as: 'avatar',
-						attributes: ['path'],
+						firstName,
+						lastName,
+						gender,
+						dateOfBirth,
+						email: email.toLowerCase(),
+						password: password.trim(),
 					},
-				],
-			});
-			const activationKey = uuid().slice(0, 6);
+					{ transaction }
+				);
 
-			await Users.update(
-				{
-					activationKey,
-				},
-				{ where: { id: user.id } }
-			);
+				if (file) {
+					await Photo.create(
+						{
+							path: file.path,
+							userId: user.id,
+						},
+						{ transaction }
+					);
+				}
 
-			await sendMail({
-				to: result.email,
-				subject: 'welcome to world of construction',
-				template: 'sendEmailCode',
-				templateData: {
-					fullName: ` ${user.firstName} ${user.lastName}`,
-					code1: activationKey[0],
-					code2: activationKey[1],
-					code3: activationKey[2],
-					code4: activationKey[3],
-					code5: activationKey[4],
-					code6: activationKey[5],
-				},
-			});
-			res.status(201).json({
-				message: 'User created successfully',
-				result,
-			});
+				const activationKey = uuid().slice(0, 6);
+
+				await Users.update(
+					{ activationKey },
+					{ where: { id: user.id }, transaction }
+				);
+
+				await sendMail({
+					to: user.email,
+					subject: 'Welcome to the world of construction',
+					template: 'sendEmailCode',
+					templateData: {
+						fullName: ` ${user.firstName} ${user.lastName}`,
+						code1: activationKey[0],
+						code2: activationKey[1],
+						code3: activationKey[2],
+						code4: activationKey[3],
+						code5: activationKey[4],
+						code6: activationKey[5],
+					},
+				});
+
+				await transaction.commit();
+
+				res.status(201).json({
+					message: 'User created successfully',
+					result: user,
+				});
+			} catch (error) {
+				await transaction.rollback();
+				console.error(error);
+				res.status(500).json({ message: 'Registration failed' });
+			}
 		} catch (e) {
-			console.log(e);
-			res.status(500).json({ message: e.message });
+			console.error(e);
+			res.status(500).json({ message: 'Internal server error' });
 		}
 	},
 
@@ -281,7 +289,7 @@ export default {
 		try {
 			const { id } = req.user;
 			const { file = null } = req;
-			const { firstName, lastName, gender, dateOfBirth } = req.body;
+			const { firstName, lastName, gender, dateOfBirth, address } = req.body;
 
 			const user = await Users.findOne({
 				where: { id },
@@ -333,6 +341,7 @@ export default {
 					lastName,
 					gender,
 					dateOfBirth,
+					address,
 				},
 				{ where: { id } }
 			);

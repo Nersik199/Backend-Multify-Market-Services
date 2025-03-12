@@ -23,6 +23,7 @@ export default {
 		lastName: Joi.string().min(3).max(50).required(),
 		gender: Joi.string().min(3).max(50).required(),
 		dateOfBirth: Joi.date().required(),
+		address: Joi.string().min(3).max(50).required(),
 	}),
 
 	changePassword: Joi.object({

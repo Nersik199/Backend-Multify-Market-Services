@@ -70,6 +70,11 @@ Users.init(
 			type: DataTypes.STRING,
 			defaultValue: null,
 		},
+		address: {
+			type: DataTypes.STRING(500),
+			allowNull: true,
+			defaultValue: null,
+		},
 	},
 	{
 		sequelize,
