@@ -340,6 +340,9 @@
                 },
                 "dateOfBirth": {
                   "example": "any"
+                },
+                "address": {
+                  "example": "any"
                 }
               }
             }
@@ -1081,9 +1084,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
           },
           "422": {
             "description": "Unprocessable Entity"
