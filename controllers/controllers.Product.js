@@ -432,7 +432,7 @@ export default {
 					quantity: product.quantity,
 					productImage:
 						product.productImage.length > 0
-							? product.productImage[0].path
+							? product.productImage.map(photo => photo.path)
 							: null,
 					categories: product.categories.map(cat => ({
 						id: cat.category.id,
