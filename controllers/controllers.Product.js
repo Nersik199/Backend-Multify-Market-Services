@@ -439,53 +439,49 @@ export default {
 				],
 			});
 
-			const formattedProducts = popularProducts
-				.map(popular => {
-					const product = productsWithDetails.find(
-						p => p.id === popular.productId
-					);
+			const formattedProducts = popularProducts.map(popular => {
+				const product = productsWithDetails.find(
+					p => p.id === popular.productId
+				);
 
-					if (!product) return null;
+				if (!product) return null;
 
-					return {
-						purchaseCount: popular.dataValues.purchaseCount,
-						id: product.id,
-						name: product.name,
-						size: product.size,
-						price: product.price,
-						description: product.description,
-						brandName: product.brandName,
-						quantity: product.quantity,
-						discounts: product.discount
-							? [
-									{
-										discountPercentage: product.discount.discountPercentage,
-										discountPrice: product.discount.discountPrice,
-										startDate: product.discount.startDate,
-										endDate: product.discount.endDate,
-									},
-							  ]
+				return {
+					purchaseCount: popular.dataValues.purchaseCount,
+					id: product.id,
+					name: product.name,
+					size: product.size,
+					price: product.price,
+					description: product.description,
+					brandName: product.brandName,
+					quantity: product.quantity,
+					discounts: product.discount
+						? {
+								discountPercentage: product.discount.discountPercentage,
+								discountPrice: product.discount.discountPrice,
+								startDate: product.discount.startDate,
+								endDate: product.discount.endDate,
+						  }
+						: [],
+					productImage:
+						product.productImage && product.productImage.length > 0
+							? product.productImage.map(photo => ({
+									path: photo.path,
+							  }))
 							: [],
-						productImage:
-							product.productImage && product.productImage.length > 0
-								? product.productImage.map(photo => ({
-										path: photo.path,
-								  }))
-								: [],
-						categories: product.categories.map(cat => ({
-							id: cat.category.id,
-							name: cat.category.name,
-						})),
-						store:
-							product.store.storeLogo && product.store.storeLogo.length > 0
-								? product.store.storeLogo.map(stor => ({
-										id: stor.name,
-										logo: stor.path,
-								  }))
-								: [],
-					};
-				})
-				.filter(Boolean);
+					categories: product.categories.map(cat => ({
+						id: cat.category.id,
+						name: cat.category.name,
+					})),
+					store:
+						product.store.storeLogo && product.store.storeLogo.length > 0
+							? product.store.storeLogo.map(stor => ({
+									id: stor.name,
+									logo: stor.path,
+							  }))
+							: [],
+				};
+			});
 
 			if (formattedProducts.length === 0) {
 				return res.json({ message: 'No popular products' });
