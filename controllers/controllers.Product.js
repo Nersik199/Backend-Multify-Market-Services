@@ -455,7 +455,7 @@ export default {
 					description: product.description,
 					brandName: product.brandName,
 					quantity: product.quantity,
-					discounts: product.discount
+					discount: product.discount
 						? {
 								discountPercentage: product.discount.discountPercentage,
 								discountPrice: product.discount.discountPrice,
