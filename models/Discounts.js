@@ -30,11 +30,11 @@ Discounts.init(
 			onDelete: 'CASCADE',
 		},
 		discountPercentage: {
-			type: DataTypes.DECIMAL(5, 2), // Например, 25.00 для 25%
+			type: DataTypes.DECIMAL(5, 2),
 			allowNull: false,
 		},
 		discountPrice: {
-			type: DataTypes.DECIMAL(10, 2), // Цена после скидки
+			type: DataTypes.DECIMAL(10, 2),
 			allowNull: false,
 		},
 		startDate: {
@@ -54,7 +54,6 @@ Discounts.init(
 	}
 );
 
-// Связь с таблицей Products
 Products.hasOne(Discounts, {
 	foreignKey: 'productId',
 	onDelete: 'CASCADE',
@@ -64,7 +63,6 @@ Discounts.belongsTo(Products, {
 	onDelete: 'CASCADE',
 });
 
-// Связь с таблицей Stores (чтобы понимать, из какого магазина скидка)
 Stores.hasMany(Discounts, {
 	foreignKey: 'storeId',
 	onDelete: 'CASCADE',

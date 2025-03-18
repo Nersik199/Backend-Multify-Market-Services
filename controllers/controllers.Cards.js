@@ -1,6 +1,7 @@
 import Cards from '../models/Cards.js';
 import Products from '../models/Products.js';
 import Photo from '../models/Photo.js';
+import Discounts from '../models/Discounts.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -78,6 +79,15 @@ export default {
 								model: Photo,
 								as: 'productImage',
 								attributes: ['id', 'path'],
+							},
+							{
+								model: Discounts,
+								attributes: [
+									'discountPercentage',
+									'discountPrice',
+									'startDate',
+									'endDate',
+								],
 							},
 						],
 					},
