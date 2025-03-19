@@ -37,6 +37,9 @@ Payments.init(
 			type: DataTypes.INTEGER.UNSIGNED,
 			allowNull: false,
 		},
+		address: {
+			type: DataTypes.STRING,
+		},
 	},
 	{
 		sequelize,

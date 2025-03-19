@@ -2,6 +2,7 @@ import yookassa from '../config/yookassaConfig.js';
 import Products from '../models/Products.js';
 import Payments from '../models/Payments.js';
 import Photo from '../models/Photo.js';
+import Users from '../models/Users.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -14,6 +15,12 @@ export default {
 		try {
 			const { products } = req.body;
 			const userId = req.user.id;
+
+			const user = await Users.findOne({
+				where: {
+					id: userId,
+				},
+			});
 
 			if (!products || !Array.isArray(products) || products.length === 0) {
 				return res.status(400).json({ message: 'Products array is required' });
@@ -66,7 +73,8 @@ export default {
 
 			for (const product of productDetails) {
 				await Payments.create({
-					userId,
+					userId: user.id,
+					address: user.address,
 					productId: product.productId,
 					amount: product.totalProductPrice,
 					quantity: product.quantity,
@@ -171,17 +179,17 @@ export default {
 			const payments = await Payments.findAll({
 				where: { userId: id },
 				attributes: [
-					'id',
 					'amount',
 					'status',
 					'quantity',
 					'createdAt',
 					'updatedAt',
+					'address',
 				],
 				include: [
 					{
 						model: Products,
-						attributes: ['name', 'size', 'brandName'],
+						attributes: ['id', 'name', 'size', 'brandName'],
 						include: [
 							{
 								model: Photo,
