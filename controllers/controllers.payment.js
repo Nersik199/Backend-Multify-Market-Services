@@ -170,7 +170,14 @@ export default {
 
 			const payments = await Payments.findAll({
 				where: { userId: id },
-				attributes: ['amount', 'status', 'quantity', 'createdAt', 'updatedAt'],
+				attributes: [
+					'id',
+					'amount',
+					'status',
+					'quantity',
+					'createdAt',
+					'updatedAt',
+				],
 				include: [
 					{
 						model: Products,
