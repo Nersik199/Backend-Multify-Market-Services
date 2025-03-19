@@ -462,7 +462,7 @@ export default {
 								startDate: product.discount.startDate,
 								endDate: product.discount.endDate,
 						  }
-						: [],
+						: null,
 					productImage:
 						product.productImage && product.productImage.length > 0
 							? product.productImage.map(photo => ({
