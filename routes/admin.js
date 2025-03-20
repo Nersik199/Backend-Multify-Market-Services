@@ -18,6 +18,13 @@ router.post(
 	controllers.createProduct
 );
 
+router.post(
+	'/review/reply',
+	checkToken,
+	validate(adminSchema.createReply, 'body'),
+	controllers.createReply
+);
+
 router.get('/products', checkToken, controllers.getAllProducts);
 router.get('/products/:categoryId', checkToken, controllers.getProducts);
 router.get('/product/:productId', checkToken, controllers.getProductById);

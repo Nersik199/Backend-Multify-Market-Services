@@ -6,7 +6,7 @@ import ProductCategories from './models/ProductCategories.js';
 import Photo from './models/Photo.js';
 import StoreAdmin from './models/StoreAdmin.js';
 import Reviews from './models/Reviews.js';
-import Comments from './models/Comments.js';
+import ReviewReplies from './models/ReviewReplies.js';
 import Cards from './models/Cards.js';
 import Payments from './models/Payments.js';
 import Discounts from './models/Discounts.js';
@@ -20,7 +20,7 @@ const models = [
 	ProductCategories,
 	Photo,
 	Reviews,
-	Comments,
+	ReviewReplies,
 	Cards,
 	Payments,
 	Discounts,
