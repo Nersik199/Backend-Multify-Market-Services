@@ -2,13 +2,10 @@ import Products from '../models/Products.js';
 import ProductCategories from '../models/ProductCategories.js';
 import Photo from '../models/Photo.js';
 import Stores from '../models/Stores.js';
-import Users from '../models/Users.js';
-import Reviews from '../models/Reviews.js';
-import Comments from '../models/Comments.js';
 import Payments from '../models/Payments.js';
 import Categories from '../models/Categories.js';
 import Discounts from '../models/Discounts.js';
-import { Op, Sequelize, where } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -59,24 +56,6 @@ export default {
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;
-			const {
-				limitReviews = 10,
-				pageReviews = 1,
-				limitComments = 10,
-				pageComments = 1,
-			} = req.query;
-
-			const reviewsTotal = await Reviews.count({ where: { productId: id } });
-
-			const { maxPageCountReviews, offsetReviews } = calculatePagination(
-				pageReviews,
-				limitReviews,
-				reviewsTotal
-			);
-
-			if (pageReviews > maxPageCountReviews) {
-				return res.status(404).json({ message: 'Review does not exist' });
-			}
 
 			if (!id) {
 				return res.status(400).json({ message: 'Product id is required' });
@@ -91,6 +70,16 @@ export default {
 						attributes: ['id', 'path'],
 					},
 					{
+						model: Discounts,
+						as: 'discount',
+						attributes: [
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
+					},
+					{
 						model: Stores,
 						as: 'store',
 						attributes: ['name'],
@@ -101,32 +90,6 @@ export default {
 								attributes: ['id', 'path'],
 							},
 						],
-					},
-					{
-						model: Reviews,
-						where: { productId: id },
-						attributes: ['id', 'rating', 'review'],
-						include: [
-							{
-								model: Users,
-								attributes: ['firstName', 'lastName', 'email'],
-							},
-							{
-								model: Comments,
-								attributes: ['id', 'comment'],
-								include: [
-									{
-										model: Users,
-										attributes: ['firstName', 'lastName', 'email'],
-									},
-								],
-								limit: +limitComments,
-								offset: (pageComments - 1) * limitComments,
-							},
-						],
-						order: [['createdAt', 'DESC']],
-						limit: +limitReviews,
-						offset: offsetReviews,
 					},
 				],
 			});
@@ -149,6 +112,14 @@ export default {
 								url: image.path,
 						  }))
 						: [],
+					discount: product.discount
+						? {
+								discountPercentage: product.discount.discountPercentage,
+								discountPrice: product.discount.discountPrice,
+								startDate: product.discount.startDate,
+								endDate: product.discount.endDate,
+						  }
+						: null,
 					store: product.store
 						? {
 								id: product.store.id,
@@ -162,35 +133,10 @@ export default {
 						  }
 						: null,
 				},
-				information: product.reviews
-					? product.reviews.map(review => ({
-							review: {
-								id: review.id,
-								rating: review.rating,
-								review: review.review,
-								firstName: review.user.firstName,
-								lastName: review.user.lastName,
-								email: review.user.email,
-							},
-							comments: review.comments
-								? review.comments.map(comment => ({
-										id: comment.id,
-										comment: comment.comment,
-										firstName: comment.user.firstName,
-										lastName: comment.user.lastName,
-										email: comment.user.email,
-								  }))
-								: [],
-					  }))
-					: [],
 			};
 
 			res.status(200).json({
 				result,
-				reviewsTotal,
-				pageReviews,
-				pageComments,
-				maxPageCountReviews,
 				message: 'Product fetched successfully',
 			});
 		} catch (error) {

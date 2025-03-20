@@ -8,9 +8,9 @@ import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
 import StoreAdmin from '../models/StoreAdmin.js';
-import Reviews from '../models/Reviews.js';
-import Comments from '../models/Comments.js';
 import Discounts from '../models/Discounts.js';
+import ReviewReplies from '../models/ReviewReplies.js';
+import Reviews from '../models/Reviews.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
@@ -173,6 +173,16 @@ export default {
 						},
 						include: [
 							{
+								model: Discounts,
+								as: 'discount',
+								attributes: [
+									'discountPercentage',
+									'discountPrice',
+									'startDate',
+									'endDate',
+								],
+							},
+							{
 								model: Stores,
 								attributes: ['name'],
 								where: { id: store.storeId },
@@ -229,24 +239,11 @@ export default {
 		try {
 			const { productId } = req.params;
 			const { id } = req.user;
-			const {
-				limitComments = 10,
-				pageComments = 1,
-				limitReviews = 10,
-				pageReviews = 1,
-			} = req.query;
 
 			if (!productId) {
 				res.status(400).json({ message: 'Product id is required' });
 				return;
 			}
-			const reviewsTotal = await Reviews.count({ where: { productId: id } });
-
-			const { maxPageCountReviews, offsetReviews } = calculatePagination(
-				pageReviews,
-				limitReviews,
-				reviewsTotal
-			);
 
 			const store = await StoreAdmin.findOne({ where: { userId: id } });
 
@@ -259,36 +256,20 @@ export default {
 						attributes: ['id', 'path'],
 					},
 					{
+						model: Discounts,
+						as: 'discount',
+						attributes: [
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
+					},
+					{
 						model: Stores,
 						as: 'store',
 						where: { id: store.storeId },
 						attributes: ['name'],
-					},
-					{
-						model: Reviews,
-						where: { productId },
-						attributes: ['id', 'rating', 'review'],
-						include: [
-							{
-								model: Users,
-								attributes: ['firstName', 'lastName', 'email'],
-							},
-							{
-								model: Comments,
-								attributes: ['id', 'comment'],
-								include: [
-									{
-										model: Users,
-										attributes: ['firstName', 'lastName', 'email'],
-									},
-								],
-								limit: +limitComments,
-								offset: (pageComments - 1) * limitComments,
-							},
-						],
-						order: [['createdAt', 'DESC']],
-						limit: +limitReviews,
-						offset: offsetReviews,
 					},
 				],
 			});
@@ -314,6 +295,14 @@ export default {
 								url: image.path,
 						  }))
 						: [],
+					discount: product.discount
+						? {
+								discountPercentage: product.discount.discountPercentage,
+								discountPrice: product.discount.discountPrice,
+								startDate: product.discount.startDate,
+								endDate: product.discount.endDate,
+						  }
+						: null,
 					store: product.store
 						? {
 								id: product.store.id,
@@ -321,35 +310,10 @@ export default {
 						  }
 						: null,
 				},
-				information: product.reviews
-					? product.reviews.map(review => ({
-							review: {
-								id: review.id,
-								rating: review.rating,
-								review: review.review,
-								firstName: review.user.firstName,
-								lastName: review.user.lastName,
-								email: review.user.email,
-							},
-							comments: review.comments
-								? review.comments.map(comment => ({
-										id: comment.id,
-										comment: comment.comment,
-										firstName: comment.user.firstName,
-										lastName: comment.user.lastName,
-										email: comment.user.email,
-								  }))
-								: [],
-					  }))
-					: [],
 			};
 
 			res.status(200).json({
 				result,
-				reviewsTotal,
-				pageReviews,
-				pageComments,
-				maxPageCountReviews,
 				message: 'Product fetched successfully',
 			});
 		} catch (error) {
@@ -410,6 +374,16 @@ export default {
 						model: Photo,
 						as: 'productImage',
 						attributes: ['path', 'id'],
+					},
+					{
+						model: Discounts,
+						as: 'discount',
+						attributes: [
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
 					},
 					{
 						model: Stores,
@@ -732,6 +706,40 @@ export default {
 			res.status(500).json({
 				message: 'Error deleting image',
 			});
+		}
+	},
+
+	async createReply(req, res) {
+		try {
+			const { reviewId, reply } = req.body;
+			const sellerId = req.user.id;
+
+			const review = await Reviews.findByPk(reviewId);
+			if (!review) {
+				return res.status(404).json({ message: 'Review not found' });
+			}
+
+			const seller = await Users.findByPk(sellerId);
+
+			if (!seller || seller.role !== 'admin') {
+				return res.status(403).json({ message: 'You are not a admin' });
+			}
+
+			const existingReply = await ReviewReplies.findOne({
+				where: { reviewId },
+			});
+			if (existingReply) {
+				return res.status(400).json({ message: 'Reply already exists' });
+			}
+
+			const newReply = await ReviewReplies.create({
+				reviewId,
+				sellerId,
+				reply,
+			});
+			res.status(201).json(newReply);
+		} catch (error) {
+			res.status(500).json({ message: error.message });
 		}
 	},
 };

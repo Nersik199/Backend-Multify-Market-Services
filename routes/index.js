@@ -7,7 +7,6 @@ import users from './users.js';
 import products from './products.js';
 import categories from './categories.js';
 import reviews from './reviews.js';
-import comments from './comments.js';
 import cards from './cards.js';
 import payment from './payments.js';
 
@@ -19,7 +18,6 @@ router.use('/admin', admin);
 router.use('/products', products);
 router.use('/categories', categories);
 router.use('/reviews', reviews);
-router.use('/comments', comments);
 router.use('/cards', cards);
 router.use('/payment', payment);
 

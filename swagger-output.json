@@ -631,6 +631,56 @@
         }
       }
     },
+    "/admin/review/reply": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reviewId": {
+                  "example": "any"
+                },
+                "reply": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/admin/products": {
       "get": {
         "description": "",
@@ -745,26 +795,6 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "limitComments",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "pageComments",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limitReviews",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "pageReviews",
-            "in": "query",
             "type": "string"
           }
         ],
@@ -1146,26 +1176,6 @@
             "in": "path",
             "required": true,
             "type": "string"
-          },
-          {
-            "name": "limitReviews",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "pageReviews",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limitComments",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "pageComments",
-            "in": "query",
-            "type": "string"
           }
         ],
         "responses": {
@@ -1344,87 +1354,6 @@
             "name": "productId",
             "in": "path",
             "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/comments/add/{reviewId}": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "reviewId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "comment": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "422": {
-            "description": "Unprocessable Entity"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/comments/list/{reviewId}": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "reviewId",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "page",
-            "in": "query",
             "type": "string"
           }
         ],

@@ -27,4 +27,9 @@ export default {
 		startDate: Joi.date().greater('now').required(),
 		endDate: Joi.date().greater(Joi.ref('startDate')).required(),
 	}),
+
+	createReply: Joi.object({
+		reviewId: Joi.number().integer().positive().required(),
+		reply: Joi.string().required(),
+	}),
 };

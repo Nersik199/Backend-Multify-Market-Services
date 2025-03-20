@@ -1,6 +1,7 @@
 import Products from '../models/Products.js';
 import Reviews from '../models/Reviews.js';
 import Users from '../models/Users.js';
+import ReviewReplies from '../models/ReviewReplies.js';
 import { Sequelize } from 'sequelize';
 
 export default {
@@ -79,6 +80,13 @@ export default {
 					{
 						model: Users,
 						attributes: ['id', 'firstName', 'lastName', 'email'],
+					},
+					{
+						model: ReviewReplies,
+						attributes: ['id', 'reply', 'createdAt'],
+						include: [
+							{ model: Users, attributes: ['id', 'firstName', 'lastName'] },
+						],
 					},
 				],
 				order: [['createdAt', 'DESC']],
