@@ -254,11 +254,13 @@ export default {
 			const payments = await Payments.findAll({
 				where: { userId: id },
 				attributes: [
+					'id',
 					'amount',
 					'status',
 					'quantity',
 					'createdAt',
 					'updatedAt',
+					'transactionId',
 					'address',
 				],
 				include: [
