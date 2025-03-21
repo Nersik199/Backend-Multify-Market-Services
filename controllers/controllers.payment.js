@@ -3,6 +3,7 @@ import Products from '../models/Products.js';
 import Payments from '../models/Payments.js';
 import Photo from '../models/Photo.js';
 import Users from '../models/Users.js';
+import Discounts from '../models/Discounts.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -16,11 +17,7 @@ export default {
 			const { products } = req.body;
 			const userId = req.user.id;
 
-			const user = await Users.findOne({
-				where: {
-					id: userId,
-				},
-			});
+			const user = await Users.findOne({ where: { id: userId } });
 
 			if (!products || !Array.isArray(products) || products.length === 0) {
 				return res.status(400).json({ message: 'Products array is required' });
@@ -36,7 +33,16 @@ export default {
 					return res.status(400).json({ message: 'Invalid product data' });
 				}
 
-				const product = await Products.findByPk(productId);
+				const product = await Products.findOne({
+					where: { id: productId },
+					include: [
+						{
+							model: Discounts,
+							as: 'discount',
+							attributes: ['discountPercentage', 'discountPrice'],
+						},
+					],
+				});
 
 				if (!product) {
 					return res
@@ -44,13 +50,28 @@ export default {
 						.json({ message: `Product with ID ${productId} not found` });
 				}
 
-				const totalProductPrice = parseFloat(product.price) * quantity;
+				let finalPrice = parseFloat(product.price);
+
+				if (product.discount) {
+					const discountPrice = parseFloat(product.discount.discountPrice);
+					const discountPercentage = parseFloat(
+						product.discount.discountPercentage
+					);
+
+					if (!isNaN(discountPrice) && discountPrice > 0) {
+						finalPrice = discountPrice;
+					} else {
+						finalPrice -= (finalPrice * discountPercentage) / 100;
+					}
+				}
+
+				const totalProductPrice = finalPrice * quantity;
 				totalPrice += totalProductPrice;
 
 				productDetails.push({
 					productId,
 					quantity,
-					price: product.price,
+					price: finalPrice,
 					name: product.name,
 					totalProductPrice,
 				});
@@ -89,7 +110,6 @@ export default {
 			res.status(500).json({ error: error.message });
 		}
 	},
-
 	async getEvent(req, res) {
 		try {
 			const { event, object } = req.body;

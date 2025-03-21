@@ -19,5 +19,6 @@ router.post(
 
 router.get('/list/:productId', controllers.getReviews);
 router.get('/summary/:productId', controllers.getReviewSummary);
+router.get('/random', controllers.getRandomReviews);
 
 export default router;
