@@ -3,6 +3,7 @@ import Reviews from '../models/Reviews.js';
 import Users from '../models/Users.js';
 import ReviewReplies from '../models/ReviewReplies.js';
 import { Sequelize } from 'sequelize';
+import Photo from '../models/Photo.js';
 
 export default {
 	createReview: async (req, res) => {
@@ -80,12 +81,29 @@ export default {
 					{
 						model: Users,
 						attributes: ['id', 'firstName', 'lastName', 'email'],
+						include: [
+							{
+								model: Photo,
+								as: 'avatar',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 					{
 						model: ReviewReplies,
 						attributes: ['id', 'reply', 'createdAt'],
 						include: [
-							{ model: Users, attributes: ['id', 'firstName', 'lastName'] },
+							{
+								model: Users,
+								attributes: ['id', 'firstName', 'lastName'],
+								include: [
+									{
+										model: Photo,
+										as: 'avatar',
+										attributes: ['id', 'path'],
+									},
+								],
+							},
 						],
 					},
 				],
