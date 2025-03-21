@@ -110,6 +110,61 @@ export default {
 			res.status(500).json({ error: error.message });
 		}
 	},
+
+	async retryPayment(req, res) {
+		try {
+			const { paymentId } = req.body;
+			const userId = req.user.id;
+
+			const payment = await Payments.findOne({
+				where: { id: paymentId, userId },
+				include: [{ model: Products }],
+			});
+
+			if (!payment) {
+				return res.status(404).json({ message: 'Payment not found' });
+			}
+
+			if (payment.status === 'paid') {
+				return res
+					.status(400)
+					.json({ message: 'This payment has already been paid' });
+			}
+
+			if (payment.status !== 'pending' && payment.status !== 'failed') {
+				return res
+					.status(400)
+					.json({ message: 'This payment cannot be retried' });
+			}
+			const amount = parseFloat(payment.amount);
+
+			const newPayment = await yookassa.createPayment({
+				amount: {
+					value: amount.toFixed(2),
+					currency: 'RUB',
+				},
+				payment_method_data: {
+					type: 'bank_card',
+				},
+				confirmation: {
+					type: 'redirect',
+					return_url: process.env.FRONT_URL,
+				},
+				description: `Повторная оплата за товар ${payment.product.name}`,
+			});
+
+			await Payments.update(
+				{ transactionId: newPayment.id, status: 'pending' },
+				{ where: { id: payment.id } }
+			);
+
+			res.status(201).json({ payment: newPayment });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ error: error.message });
+		}
+	},
+
 	async getEvent(req, res) {
 		try {
 			const { event, object } = req.body;
