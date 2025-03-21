@@ -186,4 +186,54 @@ export default {
 			});
 		}
 	},
+	getRandomReviews: async (req, res) => {
+		try {
+			const limit = 5;
+
+			const randomReviews = await Reviews.findAll({
+				attributes: ['id', 'review', 'rating', 'createdAt'],
+				include: [
+					{
+						model: Users,
+						attributes: ['id', 'firstName', 'lastName', 'email'],
+						include: [
+							{
+								model: Photo,
+								as: 'avatar',
+								attributes: ['id', 'path'],
+							},
+						],
+					},
+					{
+						model: Products,
+						attributes: ['id', 'name'],
+						include: [
+							{
+								model: Photo,
+								as: 'productImage',
+								attributes: ['id', 'path'],
+							},
+						],
+					},
+				],
+				order: Sequelize.literal('RAND()'),
+				limit: limit,
+			});
+
+			if (randomReviews.length === 0) {
+				return res.status(404).json({ message: 'No reviews found' });
+			}
+
+			res.status(200).json({
+				message: 'Random reviews retrieved successfully',
+				randomReviews,
+			});
+		} catch (error) {
+			console.error('Error fetching random reviews:', error);
+			return res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
 };

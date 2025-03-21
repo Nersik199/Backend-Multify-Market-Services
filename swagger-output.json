@@ -1370,6 +1370,22 @@
         }
       }
     },
+    "/reviews/random": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/cards/create": {
       "post": {
         "description": "",
