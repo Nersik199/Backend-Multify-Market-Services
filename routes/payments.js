@@ -18,7 +18,16 @@ router.post(
 	validate(paymentSchema.retry, 'body'),
 	controllers.retryPayment
 );
+
+router.post(
+	'/confirm-receipt',
+	validate(paymentSchema.confirmReceipt, 'body'),
+	checkToken,
+	controllers.confirmReceipt
+);
+
 router.post('/webhook/yookassa', controllers.getEvent);
 router.get('/history', checkToken, controllers.getUserPayments);
+router.get('/received', checkToken, controllers.getReceivedPayments);
 
 export default router;

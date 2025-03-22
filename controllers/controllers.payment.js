@@ -92,6 +92,10 @@ export default {
 				description: `Оплата за ${productDetails.length} товаров`,
 			});
 
+			const randomDays = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
+			const deliveryDate = new Date();
+			deliveryDate.setDate(deliveryDate.getDate() + randomDays);
+
 			for (const product of productDetails) {
 				await Payments.create({
 					userId: user.id,
@@ -101,6 +105,7 @@ export default {
 					quantity: product.quantity,
 					paymentId: payment.id,
 					transactionId: payment.id,
+					deliveryDate: deliveryDate,
 				});
 			}
 
@@ -136,7 +141,12 @@ export default {
 					.status(400)
 					.json({ message: 'This payment cannot be retried' });
 			}
+
 			const amount = parseFloat(payment.amount);
+
+			const randomDays = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
+			const deliveryDate = new Date();
+			deliveryDate.setDate(deliveryDate.getDate() + randomDays);
 
 			const newPayment = await yookassa.createPayment({
 				amount: {
@@ -154,7 +164,11 @@ export default {
 			});
 
 			await Payments.update(
-				{ transactionId: newPayment.id, status: 'pending' },
+				{
+					transactionId: newPayment.id,
+					status: 'pending',
+					deliveryDate: deliveryDate,
+				},
 				{ where: { id: payment.id } }
 			);
 
@@ -244,7 +258,13 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const total = await Payments.count({ where: { userId: id } });
+			const total = await Payments.count({
+				where: {
+					userId: id,
+					status: ['paid', 'pending', 'failed'],
+				},
+			});
+
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
 			if (page > maxPageCount) {
@@ -252,7 +272,10 @@ export default {
 			}
 
 			const payments = await Payments.findAll({
-				where: { userId: id },
+				where: {
+					userId: id,
+					status: ['paid', 'pending', 'failed'],
+				},
 				attributes: [
 					'id',
 					'amount',
@@ -262,6 +285,7 @@ export default {
 					'updatedAt',
 					'transactionId',
 					'address',
+					'deliveryDate',
 				],
 				include: [
 					{
@@ -287,6 +311,108 @@ export default {
 
 			res.json({
 				message: 'Payments retrieved successfully',
+				total,
+				currentPage: page,
+				maxPageCount,
+				data: payments,
+			});
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ success: false, message: error.message });
+		}
+	},
+
+	async confirmReceipt(req, res) {
+		try {
+			const { paymentId } = req.body;
+			const userId = req.user.id;
+
+			const payment = await Payments.findOne({
+				where: { id: paymentId, userId },
+			});
+
+			if (!payment) {
+				return res.status(404).json({ message: 'Payment not found' });
+			}
+
+			if (payment.status !== 'paid') {
+				return res
+					.status(400)
+					.json({ message: 'This payment has not been paid yet' });
+			}
+
+			await Payments.update(
+				{ status: 'received' },
+				{ where: { id: payment.id } }
+			);
+
+			res
+				.status(200)
+				.json({ message: 'Product receipt confirmed and order removed' });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ error: error.message });
+		}
+	},
+
+	async getReceivedPayments(req, res) {
+		try {
+			const { id } = req.user;
+			const { limit = 10, page = 1 } = req.query;
+
+			const total = await Payments.count({
+				where: {
+					userId: id,
+					status: 'received',
+				},
+			});
+
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				return res.status(404).json({ message: 'Page not found' });
+			}
+
+			const payments = await Payments.findAll({
+				where: {
+					userId: id,
+					status: 'received',
+				},
+				attributes: [
+					'id',
+					'amount',
+					'status',
+					'quantity',
+					'createdAt',
+					'updatedAt',
+					'transactionId',
+					'address',
+					'deliveryDate',
+				],
+				include: [
+					{
+						model: Products,
+						attributes: ['id', 'name', 'size', 'brandName'],
+						include: [
+							{
+								model: Photo,
+								as: 'productImage',
+								attributes: ['path'],
+							},
+						],
+					},
+				],
+				order: [['createdAt', 'DESC']],
+				limit: +limit,
+				offset,
+			});
+
+			if (payments.length === 0) {
+				return res.json({ message: 'No received payments found' });
+			}
+
+			res.json({
+				message: 'Received payments retrieved successfully',
 				total,
 				currentPage: page,
 				maxPageCount,

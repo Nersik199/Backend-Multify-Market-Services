@@ -12,6 +12,6 @@ export default {
 			.min(1)
 			.required(),
 	}),
-
 	retry: Joi.object({ paymentId: Joi.number().strict().required() }),
+	confirmReceipt: Joi.object({ paymentId: Joi.number().strict().required() }),
 };

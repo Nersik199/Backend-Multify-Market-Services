@@ -25,7 +25,7 @@ Payments.init(
 			allowNull: false,
 		},
 		status: {
-			type: DataTypes.ENUM('paid', 'pending', 'failed'),
+			type: DataTypes.ENUM('paid', 'pending', 'failed', 'received'),
 			allowNull: false,
 			defaultValue: 'pending',
 		},
@@ -39,6 +39,9 @@ Payments.init(
 		},
 		address: {
 			type: DataTypes.STRING,
+		},
+		deliveryDate: {
+			type: DataTypes.DATE,
 		},
 	},
 	{
