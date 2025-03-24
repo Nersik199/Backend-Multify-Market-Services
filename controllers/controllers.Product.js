@@ -5,6 +5,7 @@ import Stores from '../models/Stores.js';
 import Payments from '../models/Payments.js';
 import Categories from '../models/Categories.js';
 import Discounts from '../models/Discounts.js';
+import Cards from '../models/Cards.js';
 import { Op, Sequelize } from 'sequelize';
 
 const calculatePagination = (page, limit, total) => {
@@ -230,6 +231,7 @@ export default {
 				minPrice = 0,
 				maxPrice = 100000,
 				storeId,
+				userId = null,
 				categoryId,
 				page = 1,
 				limit = 10,
@@ -311,9 +313,44 @@ export default {
 				order: [['createdAt', 'DESC']],
 			});
 
+			let cartProducts = [];
+			if (userId) {
+				cartProducts = await Cards.findAll({
+					where: { userId },
+					attributes: ['id', 'productId', 'quantity'],
+				});
+			}
+
+			const cartProductMap = cartProducts.reduce((map, cart) => {
+				map[cart.productId] = {
+					isInCart: true,
+					cartId: cart.id,
+					quantity: cart.quantity,
+				};
+				return map;
+			}, {});
+
+			const updatedProductsList = productsList.map(product => {
+				const productData = product.toJSON();
+
+				if (!userId) {
+					return productData;
+				}
+
+				return {
+					...productData,
+					isInCart: cartProductMap[product.id]
+						? {
+								cartId: cartProductMap[product.id].cartId,
+								quantity: cartProductMap[product.id].quantity,
+						  }
+						: null,
+				};
+			});
+
 			return res.status(200).json({
 				message: 'Search results retrieved successfully',
-				productsList: productsList || [],
+				productsList: updatedProductsList || [],
 				total,
 				currentPage: page,
 				maxPageCount,
