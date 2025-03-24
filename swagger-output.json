@@ -1096,6 +1096,11 @@
             "type": "string"
           },
           {
+            "name": "userId",
+            "in": "query",
+            "type": "string"
+          },
+          {
             "name": "categoryId",
             "in": "query",
             "type": "string"
