@@ -1181,6 +1181,11 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -1192,6 +1197,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
           }
         }
       }
