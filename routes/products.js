@@ -16,7 +16,11 @@ router.get(
 );
 router.get('/popular', controllers.getMostPopularProducts);
 router.get('/discounts', controllers.getDiscounts);
-router.get('/:id', controllers.getProductById);
+router.get(
+	'/:id',
+	validate(productSchema.getProductById, 'query'),
+	controllers.getProductById
+);
 router.get(
 	'/list/:categoryId',
 	validate(productSchema.getProductsByCategory, 'query'),

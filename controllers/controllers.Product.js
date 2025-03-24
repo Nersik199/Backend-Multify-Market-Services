@@ -57,7 +57,7 @@ export default {
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;
-
+			const { userId } = req.query;
 			if (!id) {
 				return res.status(400).json({ message: 'Product id is required' });
 			}
@@ -99,6 +99,21 @@ export default {
 				return res.status(404).json({ message: 'Product not found' });
 			}
 
+			let isInCart = null;
+			if (userId) {
+				const cartItem = await Cards.findOne({
+					where: { userId, productId: id },
+					attributes: ['id', 'quantity'],
+				});
+
+				if (cartItem) {
+					isInCart = {
+						cartId: cartItem.id,
+						quantity: cartItem.quantity,
+					};
+				}
+			}
+
 			const result = {
 				product: {
 					id: product.id,
@@ -133,6 +148,7 @@ export default {
 									: [],
 						  }
 						: null,
+					isInCart,
 				},
 			};
 
