@@ -7,7 +7,8 @@ export default {
 	}),
 
 	update: Joi.object({
-		quantity: Joi.number().integer().positive().required(),
+		add: Joi.number().integer().positive().optional(),
+		remove: Joi.number().integer().positive().optional(),
 	}),
 
 	getCards: Joi.object({
