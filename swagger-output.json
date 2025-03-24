@@ -1503,7 +1503,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "quantity": {
+                "add": {
+                  "example": "any"
+                },
+                "remove": {
                   "example": "any"
                 }
               }
