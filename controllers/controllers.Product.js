@@ -498,13 +498,15 @@ export default {
 						id: cat.category.id,
 						name: cat.category.name,
 					})),
-					store:
-						product.store.storeLogo && product.store.storeLogo.length > 0
-							? product.store.storeLogo.map(stor => ({
-									id: stor.name,
-									path: stor.path,
-							  }))
-							: [],
+					store: product.store
+						? {
+								name: product.store.name,
+								storeLogo: product.store.storeLogo.map(logo => ({
+									id: logo.id,
+									path: logo.path,
+								})),
+						  }
+						: null,
 					isInCart: cartProductMap[product.id]
 						? {
 								cartId: cartProductMap[product.id].cartId,
