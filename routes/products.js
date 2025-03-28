@@ -11,8 +11,8 @@ const router = Router();
 router.get('/stores', controllers.getStores);
 router.get(
 	'/list',
-	validate(productSchema.getProductsSearch, 'query'),
-	controllers.searchProduct
+	validate(productSchema.searchAndFilterProducts, 'query'),
+	controllers.searchAndFilterProducts
 );
 router.get('/popular', controllers.getMostPopularProducts);
 router.get('/discounts', controllers.getDiscounts);
@@ -35,11 +35,4 @@ cron.schedule('0 0 * * *', async () => {
 	}
 });
 
-// router.get('/store/:storeId', controllers.getStoreAndProduct);
-
-// router.get(
-// 	'/list',
-// 	validate(productSchema.getProducts, 'query'),
-// 	controllers.getProducts
-// );
 export default router;

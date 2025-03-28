@@ -608,7 +608,7 @@ export default {
 		}
 	},
 
-	async discount(req, res) {
+	discount: async (req, res) => {
 		try {
 			const { productId, discountPercentage, startDate, endDate } = req.body;
 			const { id } = req.user;
@@ -709,7 +709,7 @@ export default {
 		}
 	},
 
-	async createReply(req, res) {
+	createReply: async (req, res) => {
 		try {
 			const { reviewId, reply } = req.body;
 			const sellerId = req.user.id;
