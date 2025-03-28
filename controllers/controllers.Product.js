@@ -240,7 +240,7 @@ export default {
 		}
 	},
 
-	async searchProduct(req, res) {
+	async searchAndFilterProducts(req, res) {
 		try {
 			const {
 				s = '',
@@ -248,10 +248,11 @@ export default {
 				maxPrice = 100000,
 				storeId,
 				userId = null,
-				categoryId,
 				page = 1,
 				limit = 10,
 			} = req.query;
+
+			const { categoryIds } = req.body;
 
 			const whereClause = {};
 
@@ -271,14 +272,20 @@ export default {
 				whereClause.storeId = storeId;
 			}
 
+			const categoryArray = categoryIds
+				? Array.isArray(categoryIds)
+					? categoryIds
+					: categoryIds.split(',')
+				: [];
+
 			const total = await Products.count({
 				where: whereClause,
-				include: categoryId
+				include: categoryArray.length
 					? [
 							{
 								model: ProductCategories,
 								as: 'categories',
-								where: { categoryId },
+								where: { categoryId: { [Op.in]: categoryArray } },
 								required: true,
 							},
 					  ]
@@ -321,8 +328,10 @@ export default {
 					{
 						model: ProductCategories,
 						as: 'categories',
-						required: !!categoryId,
-						where: categoryId ? { categoryId } : undefined,
+						required: categoryArray.length > 0,
+						where: categoryArray.length
+							? { categoryId: { [Op.in]: categoryArray } }
+							: undefined,
 						attributes: ['categoryId'],
 					},
 				],
@@ -377,6 +386,7 @@ export default {
 	},
 
 	async getMostPopularProducts(req, res) {
+		const { userId } = req.query;
 		try {
 			const popularProducts = await Payments.findAll({
 				attributes: [
@@ -438,6 +448,22 @@ export default {
 				],
 			});
 
+			let cartProducts = [];
+			if (userId) {
+				cartProducts = await Cards.findAll({
+					where: { userId },
+					attributes: ['id', 'productId', 'quantity'],
+				});
+			}
+
+			const cartProductMap = cartProducts.reduce((map, cart) => {
+				map[cart.productId] = {
+					cartId: cart.id,
+					quantity: cart.quantity,
+				};
+				return map;
+			}, {});
+
 			const formattedProducts = popularProducts.map(popular => {
 				const product = productsWithDetails.find(
 					p => p.id === popular.productId
@@ -476,9 +502,15 @@ export default {
 						product.store.storeLogo && product.store.storeLogo.length > 0
 							? product.store.storeLogo.map(stor => ({
 									id: stor.name,
-									logo: stor.path,
+									path: stor.path,
 							  }))
 							: [],
+					isInCart: cartProductMap[product.id]
+						? {
+								cartId: cartProductMap[product.id].cartId,
+								quantity: cartProductMap[product.id].quantity,
+						  }
+						: null,
 				};
 			});
 
@@ -487,7 +519,7 @@ export default {
 			}
 
 			res.json({
-				message: 'Popular products successfully',
+				message: 'Popular products successfully retrieved',
 				data: formattedProducts,
 			});
 		} catch (error) {
@@ -495,11 +527,13 @@ export default {
 			res.status(500).json({ success: false, message: error.message });
 		}
 	},
+
 	async getDiscounts(req, res) {
 		try {
 			const limit = Math.max(1, Number(req.query.limit) || 10);
 			const page = Math.max(1, Number(req.query.page) || 1);
 			const storeId = req.query.storeId ? Number(req.query.storeId) : null;
+			const userId = req.query.userId;
 
 			const storeFilter = storeId ? { id: storeId } : {};
 
@@ -557,27 +591,63 @@ export default {
 				offset,
 			});
 
-			if (discountedProducts.length === 0) {
-				return res.status(404).json({ message: 'No discounted found' });
+			let cartProducts = [];
+			if (userId) {
+				cartProducts = await Cards.findAll({
+					where: { userId },
+					attributes: ['id', 'productId', 'quantity'],
+				});
+			}
+
+			const cartProductMap = cartProducts.reduce((map, cart) => {
+				map[cart.productId] = {
+					cartId: cart.id,
+					quantity: cart.quantity,
+				};
+				return map;
+			}, {});
+
+			const updatedDiscountedProducts = discountedProducts.map(product => {
+				const productData = product.toJSON();
+
+				return {
+					...productData,
+					isInCart: cartProductMap[product.id]
+						? {
+								cartId: cartProductMap[product.id].cartId,
+								quantity: cartProductMap[product.id].quantity,
+						  }
+						: null,
+				};
+			});
+
+			if (updatedDiscountedProducts.length === 0) {
+				return res
+					.status(404)
+					.json({ message: 'No discounted products found' });
 			}
 
 			return res.json({
-				discounts: discountedProducts,
+				discounts: updatedDiscountedProducts,
 				total,
 				currentPage: page,
 				maxPageCount,
 			});
 		} catch (error) {
 			console.error(error);
-			return res.status(500).json({ message: 'Ошибка сервера' });
+			return res
+				.status(500)
+				.json({ message: 'Server error', error: error.message });
 		}
 	},
 
 	async removeExpiredDiscounts() {
 		try {
+			const now = new Date().toISOString().split('.')[0] + 'Z';
+
 			const result = await Discounts.destroy({
 				where: {
-					endDate: { [Op.lt]: '2025-03-07T00:00:00.000Z' },
+					endDate: { [Op.lt]: now },
 				},
 			});
 			console.log(`[CRON] Removed ${result} expired discounts`);
@@ -585,149 +655,4 @@ export default {
 			console.error('[CRON] Error removing discounts:', error);
 		}
 	},
-
-	// async getStoreAndProduct(req, res) {
-	// 	try {
-	// 		const { storeId } = req.params;
-	// 		const { minPrice = 0, maxPrice = 1000000 } = req.query;
-	// 		const page = +req.query.page || 1;
-	// 		const limit = +req.query.limit || 10;
-
-	// 		const store = await Stores.findOne({
-	// 			where: { id: storeId },
-	// 			attributes: ['id', 'name', 'location'],
-	// 			include: [
-	// 				{
-	// 					model: Photo,
-	// 					as: 'storeLogo',
-	// 					attributes: ['id', 'path'],
-	// 				},
-	// 			],
-	// 		});
-	// 		if (!store) {
-	// 			return res.status(404).json({ message: 'Store not found' });
-	// 		}
-
-	// 		const total = await Products.count({
-	// 			where: {
-	// 				storeId,
-	// 				price: {
-	// 					[Op.gte]: +minPrice,
-	// 					[Op.lte]: +maxPrice,
-	// 				},
-	// 			},
-	// 		});
-	// 		const { maxPageCount, offset } = calculatePagination(page, limit, total);
-
-	// 		if (page > maxPageCount) {
-	// 			return res.status(404).json({ message: 'Page not found' });
-	// 		}
-
-	// 		const productsList = await Products.findAll({
-	// 			where: {
-	// 				storeId,
-	// 				price: {
-	// 					[Op.gte]: +minPrice,
-	// 					[Op.lte]: +maxPrice,
-	// 				},
-	// 			},
-	// 			limit,
-	// 			offset,
-	// 			include: [
-	// 				{
-	// 					model: Photo,
-	// 					as: 'productImage',
-	// 					attributes: ['id', 'path'],
-	// 				},
-	// 			],
-	// 			order: [['createdAt', 'DESC']],
-	// 		});
-
-	// 		return res.status(200).json({
-	// 			message: 'Products and store details retrieved successfully',
-	// 			store,
-	// 			products: productsList,
-	// 			total,
-	// 			currentPage: page,
-	// 			maxPageCount,
-	// 		});
-	// 	} catch (error) {
-	// 		return handleErrorResponse(
-	// 			res,
-	// 			500,
-	// 			'Error fetching store and products',
-	// 			error
-	// 		);
-	// 	}
-	// },
-
-	// async getProducts(req, res) {
-	// 	try {
-	// 		const {
-	// 			minPrice = 0,
-	// 			maxPrice = 1000000,
-	// 			page = 1,
-	// 			limit = 10,
-	// 		} = req.query;
-	// 		const total = await Products.count({
-	// 			where: {
-	// 				price: {
-	// 					[Op.gte]: +minPrice,
-	// 					[Op.lte]: +maxPrice,
-	// 				},
-	// 			},
-	// 		});
-
-	// 		const { maxPageCount, offset } = calculatePagination(page, limit, total);
-
-	// 		if (page > maxPageCount) {
-	// 			return res.status(404).json({ message: 'Product does not exist' });
-	// 		}
-
-	// 		const productsList = await Products.findAll({
-	// 			where: {
-	// 				price: {
-	// 					[Op.gte]: +minPrice,
-	// 					[Op.lte]: +maxPrice,
-	// 				},
-	// 			},
-	// 			include: [
-	// 				{
-	// 					model: Photo,
-	// 					as: 'productImage',
-	// 					attributes: ['id', 'path'],
-	// 				},
-	// 				{
-	// 					model: Stores,
-	// 					as: 'store',
-	// 					attributes: ['name'],
-	// 					include: [
-	// 						{
-	// 							model: Photo,
-	// 							as: 'storeLogo',
-	// 							attributes: ['id', 'path'],
-	// 						},
-	// 					],
-	// 				},
-	// 			],
-	// 			order: [['createdAt', 'DESC']],
-	// 			limit: +limit,
-	// 			offset,
-	// 		});
-
-	// 		if (productsList.length === 0) {
-	// 			return res.status(404).json({ message: 'No products found' });
-	// 		}
-
-	// 		return res.status(200).json({
-	// 			message: 'Products retrieved successfully',
-	// 			products: productsList,
-	// 			total,
-	// 			currentPage: page,
-	// 			maxPageCount,
-	// 		});
-	// 	} catch (error) {
-	// 		return handleErrorResponse(res, 500, 'Error fetching products', error);
-	// 	}
-	// },
 };

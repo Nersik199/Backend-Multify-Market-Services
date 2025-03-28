@@ -1101,11 +1101,6 @@
             "type": "string"
           },
           {
-            "name": "categoryId",
-            "in": "query",
-            "type": "string"
-          },
-          {
             "name": "page",
             "in": "query",
             "type": "string"
@@ -1129,6 +1124,13 @@
     "/products/popular": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1155,6 +1157,11 @@
           },
           {
             "name": "storeId",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "userId",
             "in": "query",
             "type": "string"
           }

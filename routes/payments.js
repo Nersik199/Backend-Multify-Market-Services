@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import checkToken from '../middleware/checkToken.js';
-import controllers from '../controllers/controllers.payment.js';
+import controllers from '../controllers/controllers.Payment.js';
 const router = Router();
 
 import validate from '../middleware/validate.js';
