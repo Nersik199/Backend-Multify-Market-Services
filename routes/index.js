@@ -9,6 +9,7 @@ import categories from './categories.js';
 import reviews from './reviews.js';
 import cards from './cards.js';
 import payment from './payments.js';
+import notification from './notification.js';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use('/categories', categories);
 router.use('/reviews', reviews);
 router.use('/cards', cards);
 router.use('/payment', payment);
+router.use('/notifications', notification);
 
 router.get('/', (req, res) => {
 	res.render('index');

@@ -14,6 +14,7 @@ import Reviews from '../models/Reviews.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
+import sendReviewReplyNotification from '../socket/notificationService.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -720,16 +721,8 @@ export default {
 			}
 
 			const seller = await Users.findByPk(sellerId);
-
 			if (!seller || seller.role !== 'admin') {
-				return res.status(403).json({ message: 'You are not a admin' });
-			}
-
-			const existingReply = await ReviewReplies.findOne({
-				where: { reviewId },
-			});
-			if (existingReply) {
-				return res.status(400).json({ message: 'Reply already exists' });
+				return res.status(403).json({ message: 'You are not an admin' });
 			}
 
 			const newReply = await ReviewReplies.create({
@@ -737,6 +730,30 @@ export default {
 				sellerId,
 				reply,
 			});
+
+			const product = await Products.findOne({
+				where: { id: review.productId },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path'],
+					},
+				],
+			});
+
+			if (!product) {
+				return res.status(404).json({ message: 'Product not found' });
+			}
+
+			const productData = {
+				id: product.id,
+				name: product.name,
+				path: product.productImage?.[0]?.path || null,
+			};
+
+			sendReviewReplyNotification(review.userId, reply, seller, productData);
+
 			res.status(201).json(newReply);
 		} catch (error) {
 			res.status(500).json({ message: error.message });
