@@ -2,6 +2,7 @@ import 'dotenv/config.js';
 import app from '../app.js';
 import debugLib from 'debug';
 import http from 'http';
+import setupSocketIO from '../socket/socket.js';
 
 const debug = debugLib('golobe:server');
 
@@ -9,6 +10,8 @@ const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 const server = http.createServer(app);
+//socket
+setupSocketIO(server);
 
 server.listen(port);
 server.on('error', onError);

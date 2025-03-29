@@ -1,4 +1,5 @@
 import Users from './models/Users.js';
+import Notification from './models/Notification.js';
 import Stores from './models/Stores.js';
 import Products from './models/Products.js';
 import Categories from './models/Categories.js';
@@ -13,6 +14,7 @@ import Discounts from './models/Discounts.js';
 
 const models = [
 	Users,
+	Notification,
 	Stores,
 	StoreAdmin,
 	Products,
