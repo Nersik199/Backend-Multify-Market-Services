@@ -1,10 +1,12 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { Op, Sequelize } from 'sequelize';
 
-//models
+// Models
 import Photo from '../models/Photo.js';
 import Users from '../models/Users.js';
 import Stores from '../models/Stores.js';
 import StoreAdmin from '../models/StoreAdmin.js';
+import Payments from '../models/Payments.js';
 
 export default {
 	createStore: async (req, res) => {
@@ -139,11 +141,211 @@ export default {
 		}
 	},
 
-	//get all user and admin or user
-	//delate store
-	//delate admin
-	//delate user
-	//get statistic
-	//update logo store
-	// get tranzaktions for store
+	getStatistics: async (req, res) => {
+		try {
+			const { storeId } = req.params;
+			let { startDate, endDate, groupBy = 'day' } = req.query;
+			const { id } = req.user;
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view statistics',
+				});
+			}
+
+			if (!storeId) {
+				return res.status(400).json({
+					message: 'Please provide a storeId in the request parameters',
+				});
+			}
+
+			const productsCount = await Payments.count({
+				where: {
+					storeId,
+				},
+			});
+
+			if (!productsCount) {
+				return res.status(404).json({
+					message: 'No products found for this store',
+				});
+			}
+
+			if (!startDate || !endDate) {
+				const now = new Date();
+				const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+				const lastDayOfMonth = new Date(
+					now.getFullYear(),
+					now.getMonth() + 1,
+					0
+				);
+
+				startDate = firstDayOfMonth.toISOString().split('T')[0];
+				endDate = lastDayOfMonth.toISOString().split('T')[0];
+			}
+
+			const start = new Date(startDate);
+			const end = new Date(endDate);
+
+			if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+				return res.status(400).json({
+					message: 'Invalid date format. Please use YYYY-MM-DD',
+				});
+			}
+
+			let groupInterval = Sequelize.literal(
+				"DATE_FORMAT(createdAt, '%Y-%m-%d')"
+			);
+
+			const salesStatistics = await Payments.findAll({
+				attributes: [
+					[groupInterval, 'interval'],
+					[Sequelize.fn('SUM', Sequelize.col('amount')), 'totalRevenue'],
+					[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalSales'],
+				],
+				where: {
+					storeId,
+					createdAt: {
+						[Op.between]: [start, end],
+					},
+				},
+				group: ['interval'],
+				order: [groupInterval],
+			});
+
+			if (!salesStatistics.length) {
+				return res.status(200).json({
+					storeId,
+					totalRevenue: 0,
+					statistics: [],
+					message: 'No sales statistics found for this store and period',
+				});
+			}
+
+			const totalRevenue = await Payments.sum('amount', {
+				where: {
+					storeId,
+					createdAt: {
+						[Op.between]: [start, end],
+					},
+				},
+			});
+
+			const statistics = salesStatistics.map(stat => ({
+				interval: stat.dataValues.interval,
+				totalRevenue: parseFloat(stat.dataValues.totalRevenue),
+				totalSales: parseInt(stat.dataValues.totalSales, 10),
+			}));
+
+			res.status(200).json({
+				storeId,
+				totalRevenue: totalRevenue || 0,
+				productsCount,
+				statistics,
+				message: 'Sales statistics for the store fetched successfully',
+			});
+		} catch (error) {
+			console.error('Error fetching sales statistics for the store:', error);
+			res.status(500).json({
+				message: 'Error fetching sales statistics for the store',
+			});
+		}
+	},
+
+	getBuyers: async (req, res) => {
+		try {
+			const { storeId } = req.params;
+			const { startDate, endDate } = req.query;
+			const { id } = req.user;
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view statistics',
+				});
+			}
+			if (!storeId) {
+				return res.status(400).json({
+					message: 'Please provide a storeId in the request parameters',
+				});
+			}
+
+			let start = startDate
+				? new Date(startDate)
+				: new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+			let end = endDate
+				? new Date(endDate)
+				: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+			if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+				return res.status(400).json({
+					message: 'Invalid date format. Please use YYYY-MM-DD',
+				});
+			}
+
+			const buyersData = await Payments.findAll({
+				attributes: [
+					'userId',
+					[Sequelize.fn('SUM', Sequelize.col('amount')), 'totalSpent'],
+					[Sequelize.fn('SUM', Sequelize.col('quantity')), 'totalQuantity'],
+				],
+				where: {
+					storeId,
+					createdAt: { [Op.between]: [start, end] },
+				},
+				group: ['userId'],
+				raw: true,
+			});
+
+			if (!buyersData.length) {
+				return res.status(200).json({
+					storeId,
+					buyers: [],
+					message: 'No buyers found for this store and period',
+				});
+			}
+
+			const userIds = buyersData.map(u => u.userId);
+
+			if (!userIds.length) {
+				return res.status(200).json({
+					storeId,
+					buyers: [],
+					message: 'No buyers found for this period',
+				});
+			}
+
+			const users = await Users.findAll({
+				attributes: ['id', 'email'],
+				where: { id: userIds },
+				include: {
+					model: Photo,
+					as: 'avatar',
+					attributes: ['path'],
+				},
+				raw: true,
+			});
+
+			const buyers = users.map(user => {
+				const buyerData = buyersData.find(b => b.userId === user.id);
+				return {
+					id: user.id,
+					email: user.email,
+					avatar: user['avatar.path'] ? user['avatar.path'] : null,
+					totalSpent: buyerData ? parseFloat(buyerData.totalSpent) : 0,
+					totalQuantity: buyerData ? parseInt(buyerData.totalQuantity) : 0,
+				};
+			});
+
+			res.status(200).json({
+				storeId,
+				buyers,
+				message: 'Buyers fetched successfully',
+			});
+		} catch (error) {
+			console.error('Error fetching buyers for the store:', error);
+			res.status(500).json({
+				message: 'Error fetching buyers for the store',
+			});
+		}
+	},
 };
