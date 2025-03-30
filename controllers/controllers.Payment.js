@@ -74,6 +74,7 @@ export default {
 					price: finalPrice,
 					name: product.name,
 					totalProductPrice,
+					storeId: product.storeId,
 				});
 			}
 
@@ -106,6 +107,7 @@ export default {
 					paymentId: payment.id,
 					transactionId: payment.id,
 					deliveryDate: deliveryDate,
+					storeId: product.storeId,
 				});
 			}
 

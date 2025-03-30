@@ -43,6 +43,10 @@ Payments.init(
 		deliveryDate: {
 			type: DataTypes.DATE,
 		},
+		storeId: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			allowNull: false,
+		},
 	},
 	{
 		sequelize,
