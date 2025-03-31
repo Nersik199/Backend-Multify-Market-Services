@@ -289,6 +289,7 @@ export default {
 					description: product.description,
 					price: product.price,
 					size: product.size,
+					quantity: product.quantity,
 					brandName: product.brandName,
 					images: product.productImage
 						? product.productImage.map(image => ({
