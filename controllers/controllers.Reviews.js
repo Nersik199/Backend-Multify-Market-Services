@@ -298,6 +298,25 @@ export default {
 			const review = await Reviews.findOne({
 				where: { productId: payment.productId, userId },
 				attributes: ['id', 'review', 'rating', 'createdAt'],
+				include: [
+					{
+						model: Products,
+						as: 'product',
+						attributes: ['id', 'name', 'description'],
+						include: [
+							{
+								model: Photo,
+								as: 'productImage',
+								attributes: ['id', 'path'],
+							},
+						],
+					},
+					{
+						model: Users,
+						as: 'user',
+						attributes: ['id', 'firstName', 'lastName', 'email'],
+					},
+				],
 			});
 
 			if (!review) {
@@ -307,9 +326,35 @@ export default {
 				});
 			}
 
+			const productImage = review.product.productImage
+				? review.product.productImage.length > 0
+					? review.product.productImage.map(image => ({
+							id: image.id,
+							path: image.path,
+					  }))
+					: null
+				: null;
+
 			return res.status(200).json({
 				message: 'Review retrieved successfully',
-				review,
+				review: {
+					id: review.id,
+					review: review.review,
+					rating: review.rating,
+					createdAt: review.createdAt,
+					product: {
+						id: review.product.id,
+						name: review.product.name,
+						description: review.product.description,
+						productImage,
+					},
+					user: {
+						id: review.user.id,
+						firstName: review.user.firstName,
+						lastName: review.user.lastName,
+						email: review.user.email,
+					},
+				},
 			});
 		} catch (error) {
 			console.error('Error fetching review by payment:', error);
