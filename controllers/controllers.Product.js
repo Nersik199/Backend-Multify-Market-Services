@@ -250,16 +250,17 @@ export default {
 				userId = null,
 				page = 1,
 				limit = 10,
+				categoryIds, // Получаем categoryIds из query
 			} = req.query;
-
-			const { categoryIds } = req.body;
 
 			const whereClause = {};
 
+			// Поиск по названию
 			if (s) {
 				whereClause.name = { [Op.like]: `%${s}%` };
 			}
 
+			// Фильтрация по цене
 			if (minPrice && maxPrice) {
 				whereClause.price = { [Op.between]: [+minPrice, +maxPrice] };
 			} else if (minPrice) {
@@ -268,14 +269,19 @@ export default {
 				whereClause.price = { [Op.lte]: +maxPrice };
 			}
 
+			// Фильтрация по магазину
 			if (storeId) {
 				whereClause.storeId = storeId;
 			}
 
+			// Преобразуем categoryIds в массив
 			const categoryArray = categoryIds
 				? Array.isArray(categoryIds)
 					? categoryIds
-					: categoryIds.split(',')
+					: categoryIds
+							.split(',')
+							.map(id => parseInt(id, 10))
+							.filter(id => !isNaN(id))
 				: [];
 
 			const total = await Products.count({
