@@ -8,11 +8,13 @@ import Products from '../models/Products.js';
 import Categories from '../models/Categories.js';
 import ProductCategories from '../models/ProductCategories.js';
 import StoreAdmin from '../models/StoreAdmin.js';
+import Discounts from '../models/Discounts.js';
+import ReviewReplies from '../models/ReviewReplies.js';
 import Reviews from '../models/Reviews.js';
-import Comments from '../models/Comments.js';
 
 // utils
 import updateImages from '../utils/updateImages.js';
+import sendReviewReplyNotification from '../socket/notificationService.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -43,7 +45,7 @@ export default {
 		try {
 			const { files = [] } = req;
 			const { categoryId } = req.params;
-			const { name, size, price, description, brandName } = req.body;
+			const { name, size, price, description, brandName, quantity } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -78,6 +80,7 @@ export default {
 				price,
 				description,
 				brandName,
+				quantity,
 				storeId: store.storeId,
 			});
 
@@ -131,6 +134,7 @@ export default {
 			const { categoryId } = req.params;
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
 
 			const total = await ProductCategories.count({ where: { categoryId } });
 
@@ -162,7 +166,23 @@ export default {
 				include: [
 					{
 						model: Products,
+						where: {
+							price: {
+								[Op.gte]: minPrice,
+								[Op.lte]: maxPrice,
+							},
+						},
 						include: [
+							{
+								model: Discounts,
+								as: 'discount',
+								attributes: [
+									'discountPercentage',
+									'discountPrice',
+									'startDate',
+									'endDate',
+								],
+							},
 							{
 								model: Stores,
 								attributes: ['name'],
@@ -220,24 +240,11 @@ export default {
 		try {
 			const { productId } = req.params;
 			const { id } = req.user;
-			const {
-				limitComments = 10,
-				pageComments = 1,
-				limitReviews = 10,
-				pageReviews = 1,
-			} = req.query;
 
 			if (!productId) {
 				res.status(400).json({ message: 'Product id is required' });
 				return;
 			}
-			const reviewsTotal = await Reviews.count({ where: { productId: id } });
-
-			const { maxPageCountReviews, offsetReviews } = calculatePagination(
-				pageReviews,
-				limitReviews,
-				reviewsTotal
-			);
 
 			const store = await StoreAdmin.findOne({ where: { userId: id } });
 
@@ -250,36 +257,20 @@ export default {
 						attributes: ['id', 'path'],
 					},
 					{
+						model: Discounts,
+						as: 'discount',
+						attributes: [
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
+					},
+					{
 						model: Stores,
 						as: 'store',
 						where: { id: store.storeId },
 						attributes: ['name'],
-					},
-					{
-						model: Reviews,
-						where: { productId },
-						attributes: ['id', 'rating', 'review'],
-						include: [
-							{
-								model: Users,
-								attributes: ['firstName', 'lastName', 'email'],
-							},
-							{
-								model: Comments,
-								attributes: ['id', 'comment'],
-								include: [
-									{
-										model: Users,
-										attributes: ['firstName', 'lastName', 'email'],
-									},
-								],
-								limit: +limitComments,
-								offset: (pageComments - 1) * limitComments,
-							},
-						],
-						order: [['createdAt', 'DESC']],
-						limit: +limitReviews,
-						offset: offsetReviews,
 					},
 				],
 			});
@@ -298,6 +289,7 @@ export default {
 					description: product.description,
 					price: product.price,
 					size: product.size,
+					quantity: product.quantity,
 					brandName: product.brandName,
 					images: product.productImage
 						? product.productImage.map(image => ({
@@ -305,6 +297,14 @@ export default {
 								url: image.path,
 						  }))
 						: [],
+					discount: product.discount
+						? {
+								discountPercentage: product.discount.discountPercentage,
+								discountPrice: product.discount.discountPrice,
+								startDate: product.discount.startDate,
+								endDate: product.discount.endDate,
+						  }
+						: null,
 					store: product.store
 						? {
 								id: product.store.id,
@@ -312,35 +312,10 @@ export default {
 						  }
 						: null,
 				},
-				information: product.reviews
-					? product.reviews.map(review => ({
-							review: {
-								id: review.id,
-								rating: review.rating,
-								review: review.review,
-								firstName: review.user.firstName,
-								lastName: review.user.lastName,
-								email: review.user.email,
-							},
-							comments: review.comments
-								? review.comments.map(comment => ({
-										id: comment.id,
-										comment: comment.comment,
-										firstName: comment.user.firstName,
-										lastName: comment.user.lastName,
-										email: comment.user.email,
-								  }))
-								: [],
-					  }))
-					: [],
 			};
 
 			res.status(200).json({
 				result,
-				reviewsTotal,
-				pageReviews,
-				pageComments,
-				maxPageCountReviews,
 				message: 'Product fetched successfully',
 			});
 		} catch (error) {
@@ -356,7 +331,15 @@ export default {
 			const { id } = req.user;
 			const { limit = 10, page = 1 } = req.query;
 
-			const total = await Products.count();
+			const { minPrice = 0, maxPrice = 1000000 } = req.query;
+			const total = await Products.count({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
+			});
 
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -382,11 +365,27 @@ export default {
 			}
 
 			const products = await Products.findAll({
+				where: {
+					price: {
+						[Op.gte]: +minPrice,
+						[Op.lte]: +maxPrice,
+					},
+				},
 				include: [
 					{
 						model: Photo,
 						as: 'productImage',
 						attributes: ['path', 'id'],
+					},
+					{
+						model: Discounts,
+						as: 'discount',
+						attributes: [
+							'discountPercentage',
+							'discountPrice',
+							'startDate',
+							'endDate',
+						],
 					},
 					{
 						model: Stores,
@@ -429,67 +428,61 @@ export default {
 				price,
 				description,
 				brandName,
+				quantity,
 				imageId = null,
 			} = req.body;
 			const { id } = req.user;
-			const { files = null } = req;
+			const files = req.files || [];
 
 			const product = await Products.findOne({
-				where: { id: productId },
+				where: { id: Number(productId) },
 				include: [
-					{
-						model: Photo,
-						as: 'productImage',
-						attributes: ['path', 'id'],
-					},
+					{ model: Photo, as: 'productImage', attributes: ['path', 'id'] },
 				],
 			});
 
 			if (!product) {
-				res.status(404).json({
-					message: 'Product not found',
-				});
-				return;
+				return res.status(404).json({ message: 'Product not found' });
 			}
 
 			const user = await Users.findByPk(id);
-
-			if (user.role !== 'admin') {
-				return res.status(401).json({
-					message: 'You are not authorized to update this product',
-				});
+			if (!user || user.role !== 'admin') {
+				return res
+					.status(403)
+					.json({ message: 'You are not authorized to update this product' });
 			}
 
-			if (files && !imageId) {
-				for (const file of files) {
-					await Photo.create({
-						path: file.path,
-						productId: productId,
-					});
-				}
+			if (files.length && !imageId) {
+				await Promise.all(
+					files.map(file =>
+						Photo.create({ path: file.path, productId: product.id })
+					)
+				);
 			}
 
-			if (imageId && files) {
-				await updateImages(res, 'Product', files, imageId);
+			let imageUpdateResult = null;
+			if (imageId && files.length) {
+				imageUpdateResult = await updateImages('Product', files, imageId);
 			}
 
-			const productUpdate = await product.update({
+			await product.update({
 				name,
 				size,
+				quantity,
 				price,
 				description,
 				brandName,
 			});
 
-			res.status(200).json({
-				productUpdate,
-				message: 'Product updated successfully',
-			});
+			let response = { product, message: 'Product updated successfully' };
+			if (imageUpdateResult && !imageUpdateResult.success) {
+				response.imageMessage = imageUpdateResult.message;
+			}
+
+			return res.status(200).json(response);
 		} catch (error) {
-			console.log(error);
-			res.status(500).json({
-				message: 'Error updating product',
-			});
+			console.error(error);
+			return res.status(500).json({ message: 'Error updating product' });
 		}
 	},
 
@@ -617,6 +610,59 @@ export default {
 		}
 	},
 
+	discount: async (req, res) => {
+		try {
+			const { productId, discountPercentage, startDate, endDate } = req.body;
+			const { id } = req.user;
+
+			const store = await StoreAdmin.findOne({ where: { userId: id } });
+			if (!store) {
+				return res.status(404).json({ message: 'Store not found' });
+			}
+
+			const product = await Products.findByPk(productId);
+			if (!product) {
+				return res.status(404).json({ message: 'Product not found' });
+			}
+
+			const discountPrice = (product.price * (100 - discountPercentage)) / 100;
+
+			const existingDiscount = await Discounts.findOne({
+				where: { productId },
+			});
+
+			if (existingDiscount) {
+				await existingDiscount.update({
+					storeId: store.storeId,
+					discountPercentage,
+					discountPrice,
+					startDate: startDate || existingDiscount.startDate,
+					endDate: endDate || existingDiscount.endDate,
+				});
+
+				return res.json({
+					message: 'Discount updated',
+					discount: existingDiscount,
+				});
+			}
+
+			const newDiscount = await Discounts.create({
+				storeId: store.storeId,
+				productId,
+				discountPercentage,
+				discountPrice,
+				startDate: startDate || new Date(),
+				endDate:
+					endDate || new Date(new Date().setDate(new Date().getDate() + 7)),
+			});
+
+			return res.json({ message: 'Discount created', discount: newDiscount });
+		} catch (error) {
+			console.error(error);
+			return res.status(500).json({ message });
+		}
+	},
+
 	delateImage: async (req, res) => {
 		try {
 			const { imageId } = req.params;
@@ -662,6 +708,56 @@ export default {
 			res.status(500).json({
 				message: 'Error deleting image',
 			});
+		}
+	},
+
+	createReply: async (req, res) => {
+		try {
+			const { reviewId, reply } = req.body;
+			const sellerId = req.user.id;
+
+			const review = await Reviews.findByPk(reviewId);
+			if (!review) {
+				return res.status(404).json({ message: 'Review not found' });
+			}
+
+			const seller = await Users.findByPk(sellerId);
+			if (!seller || seller.role !== 'admin') {
+				return res.status(403).json({ message: 'You are not an admin' });
+			}
+
+			const newReply = await ReviewReplies.create({
+				reviewId,
+				sellerId,
+				reply,
+			});
+
+			const product = await Products.findOne({
+				where: { id: review.productId },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path'],
+					},
+				],
+			});
+
+			if (!product) {
+				return res.status(404).json({ message: 'Product not found' });
+			}
+
+			const productData = {
+				id: product.id,
+				name: product.name,
+				path: product.productImage?.[0]?.path || null,
+			};
+
+			sendReviewReplyNotification(review.userId, reply, seller, productData);
+
+			res.status(201).json(newReply);
+		} catch (error) {
+			res.status(500).json({ message: error.message });
 		}
 	},
 };

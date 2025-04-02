@@ -26,5 +26,7 @@ router.post(
 	validate(superAdminSchema.setupUserStore, 'body'),
 	controllers.setupUserStore
 );
+router.get('/statistics/:storeId', checkToken, controllers.getStatistics);
+router.get('/stores/:storeId/buyers', checkToken, controllers.getBuyers);
 
 export default router;

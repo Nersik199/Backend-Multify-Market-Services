@@ -5,9 +5,10 @@ export default {
 		name: Joi.string().required(),
 		size: Joi.string().required(),
 		price: Joi.number().required().positive(),
-		description: Joi.string().required(),
+		description: Joi.string().max(200).min(10).required(),
 		brandName: Joi.string().required(),
 		productImage: Joi.string().optional(),
+		quantity: Joi.number().required(),
 	}),
 
 	updateProduct: Joi.object({
@@ -15,7 +16,20 @@ export default {
 		name: Joi.string().required(),
 		size: Joi.string().required(),
 		price: Joi.number().required().positive(),
-		description: Joi.string().required(),
+		description: Joi.string().max(200).min(10).required(),
 		brandName: Joi.string().required(),
+		quantity: Joi.number().required(),
+	}),
+
+	discountSchema: Joi.object({
+		productId: Joi.number().integer().positive().required(),
+		discountPercentage: Joi.number().positive().max(100).required(),
+		startDate: Joi.date().greater('now').required(),
+		endDate: Joi.date().greater(Joi.ref('startDate')).required(),
+	}),
+
+	createReply: Joi.object({
+		reviewId: Joi.number().integer().positive().required(),
+		reply: Joi.string().required(),
 	}),
 };
