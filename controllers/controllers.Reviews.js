@@ -57,6 +57,7 @@ export default {
 				.json({ error: 'An error occurred while creating the review' });
 		}
 	},
+
 	getReviews: async (req, res) => {
 		try {
 			const { productId } = req.params;
@@ -134,6 +135,7 @@ export default {
 			});
 		}
 	},
+
 	getReviewSummary: async (req, res) => {
 		const { productId } = req.params;
 		try {
@@ -186,6 +188,7 @@ export default {
 			});
 		}
 	},
+
 	getRandomReviews: async (req, res) => {
 		try {
 			const limit = 5;
@@ -237,43 +240,6 @@ export default {
 		}
 	},
 
-	getUserReviews: async (req, res) => {
-		try {
-			const { id: userId } = req.user;
-			const { paymentId } = req.params;
-			const payment = await Payments.findOne({
-				where: { id: paymentId, userId },
-			});
-			if (!payment) {
-				return res.status(404).json({
-					message: 'Payment not found',
-				});
-			}
-
-			const reviews = await Reviews.findOne({
-				where: { productId: payment.productId, userId },
-			});
-
-			if (!reviews) {
-				return res.status(404).json({
-					message: 'No reviews found for this payment',
-					reviews: [],
-				});
-			}
-
-			return res.status(200).json({
-				message: 'Payment found',
-				reviews,
-			});
-		} catch (error) {
-			console.error('Error fetching user reviews:', error);
-			return res.status(500).json({
-				message: 'Internal server error',
-				error: error.message,
-			});
-		}
-	},
-
 	getReviewByPayment: async (req, res) => {
 		try {
 			const { id: userId } = req.user;
@@ -315,6 +281,13 @@ export default {
 						model: Users,
 						as: 'user',
 						attributes: ['id', 'firstName', 'lastName', 'email'],
+						include: [
+							{
+								model: Photo,
+								as: 'avatar',
+								attributes: ['id', 'path'],
+							},
+						],
 					},
 				],
 			});
@@ -353,6 +326,8 @@ export default {
 						firstName: review.user.firstName,
 						lastName: review.user.lastName,
 						email: review.user.email,
+						avatar:
+							review.user.avatar.length > 0 ? review.user.avatar[0].path : null,
 					},
 				},
 			});
