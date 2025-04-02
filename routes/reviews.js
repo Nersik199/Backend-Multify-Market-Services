@@ -16,6 +16,7 @@ router.post(
 	validate(reviewSchema.createReview, 'body'),
 	controllers.createReview
 );
+router.get('/:paymentId', checkToken, controllers.getReviewByPayment);
 
 router.get('/list/:productId', controllers.getReviews);
 router.get('/summary/:productId', controllers.getReviewSummary);

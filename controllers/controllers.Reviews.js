@@ -4,7 +4,7 @@ import Users from '../models/Users.js';
 import ReviewReplies from '../models/ReviewReplies.js';
 import { Sequelize } from 'sequelize';
 import Photo from '../models/Photo.js';
-
+import Payments from '../models/Payments.js';
 export default {
 	createReview: async (req, res) => {
 		try {
@@ -230,6 +230,89 @@ export default {
 			});
 		} catch (error) {
 			console.error('Error fetching random reviews:', error);
+			return res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
+
+	getUserReviews: async (req, res) => {
+		try {
+			const { id: userId } = req.user;
+			const { paymentId } = req.params;
+			const payment = await Payments.findOne({
+				where: { id: paymentId, userId },
+			});
+			if (!payment) {
+				return res.status(404).json({
+					message: 'Payment not found',
+				});
+			}
+
+			const reviews = await Reviews.findOne({
+				where: { productId: payment.productId, userId },
+			});
+
+			if (!reviews) {
+				return res.status(404).json({
+					message: 'No reviews found for this payment',
+					reviews: [],
+				});
+			}
+
+			return res.status(200).json({
+				message: 'Payment found',
+				reviews,
+			});
+		} catch (error) {
+			console.error('Error fetching user reviews:', error);
+			return res.status(500).json({
+				message: 'Internal server error',
+				error: error.message,
+			});
+		}
+	},
+
+	getReviewByPayment: async (req, res) => {
+		try {
+			const { id: userId } = req.user;
+			const { paymentId } = req.params;
+
+			if (!paymentId) {
+				return res.status(400).json({
+					message: 'Invalid request: paymentId is required.',
+				});
+			}
+
+			const payment = await Payments.findOne({
+				where: { id: paymentId, userId },
+			});
+
+			if (!payment) {
+				return res.status(404).json({
+					message: 'Payment not found',
+				});
+			}
+
+			const review = await Reviews.findOne({
+				where: { productId: payment.productId, userId },
+				attributes: ['id', 'review', 'rating', 'createdAt'],
+			});
+
+			if (!review) {
+				return res.status(404).json({
+					message: 'No reviews found for this payment',
+					review: [],
+				});
+			}
+
+			return res.status(200).json({
+				message: 'Review retrieved successfully',
+				review,
+			});
+		} catch (error) {
+			console.error('Error fetching review by payment:', error);
 			return res.status(500).json({
 				message: 'Internal server error',
 				error: error.message,
