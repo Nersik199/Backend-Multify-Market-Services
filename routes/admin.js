@@ -45,5 +45,17 @@ router.post(
 
 router.delete('/product/:productId', checkToken, controllers.deleteProduct);
 router.delete('/image/:imageId', checkToken, controllers.delateImage);
+router.get(
+	'/statistics',
+	checkToken,
+	validate(adminSchema.getStatistics, 'query'),
+	controllers.getStatistics
+);
 
+router.get(
+	'/buyers',
+	checkToken,
+	validate(adminSchema.getBuyers, 'query'),
+	controllers.getBuyers
+);
 export default router;
