@@ -32,4 +32,15 @@ export default {
 		reviewId: Joi.number().integer().positive().required(),
 		reply: Joi.string().required(),
 	}),
+
+	getStatistics: Joi.object({
+		startDate: Joi.date().iso().optional(),
+		endDate: Joi.date().iso().optional(),
+		groupBy: Joi.string().valid('day', 'month', 'year').optional(),
+	}),
+
+	getBuyers: Joi.object({
+		startDate: Joi.date().iso().optional(),
+		endDate: Joi.date().iso().optional(),
+	}),
 };
