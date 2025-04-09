@@ -317,8 +317,6 @@ export default {
 						.slice(0, -1)
 						.join('.')}`;
 
-					console.log(publicId);
-
 					await cloudinary.uploader.destroy(publicId);
 
 					await Photo.update(
@@ -376,33 +374,38 @@ export default {
 	async forgotPassword(req, res) {
 		try {
 			const { email } = req.body;
-			const { USER_PASSWORD_SECRET } = process.env;
+
 			const user = await Users.findOne({ where: { email } });
+
 			if (!user) {
-				res.status(404).json({ message: 'wrong email address' });
-				return;
+				return res.status(404).json({ message: 'Wrong email address' });
 			}
+
 			if (user.status !== 'active') {
-				res.status(401).json({ message: 'Please activate your account' });
-				return;
+				return res
+					.status(401)
+					.json({ message: 'Please activate your account' });
 			}
-			const payload = jwt.sign(
-				{ id: user.id, email: user.email },
-				USER_PASSWORD_SECRET,
-				{
-					expiresIn: '6d',
-				}
-			);
+
+			const resetCode = uuid().slice(0, 6);
+
+			await Users.update({ resetCode }, { where: { id: user.id } });
 
 			await sendMail({
 				to: user.email,
-				subject: 'update password account',
-				template: 'passwordMessage',
+				subject: 'Update password account',
+				template: 'sendEmailCode',
 				templateData: {
-					title: 'Update password',
-					link: `http://localhost:3000/users/update/password?key=${payload}`,
+					fullName: `${user.firstName} ${user.lastName}`,
+					code1: resetCode[0],
+					code2: resetCode[1],
+					code3: resetCode[2],
+					code4: resetCode[3],
+					code5: resetCode[4],
+					code6: resetCode[5],
 				},
 			});
+
 			res.status(200).json({ message: 'Email sent successfully' });
 		} catch (error) {
 			console.log(error);
@@ -412,22 +415,25 @@ export default {
 
 	async updatePassword(req, res) {
 		try {
-			const { repeatPassword } = req.body;
-			const { key } = req.query;
-			const { USER_PASSWORD_SECRET } = process.env;
+			const { newPassword, key } = req.body;
+
+			const user = await Users.findOne({
+				where: {
+					resetCode: key,
+				},
+			});
+
+			if (!user) {
+				return res.status(400).json({ message: 'user not fud' });
+			}
 
 			if (!key) {
-				return res.status(400).json({ message: 'Token must be provided' });
-			}
-			const verifyPass = jwt.verify(key, USER_PASSWORD_SECRET);
-
-			if (!verifyPass) {
-				return res.status(401).json({ message: 'Invalid password key' });
+				return res.status(400).json({ message: 'key must be provided' });
 			}
 
 			await Users.update(
-				{ password: repeatPassword },
-				{ where: { id: verifyPass.id } }
+				{ password: newPassword.trim(), resetCode: null },
+				{ where: { id: user.id } }
 			);
 
 			res.status(200).json({ message: 'Password updated successfully' });
