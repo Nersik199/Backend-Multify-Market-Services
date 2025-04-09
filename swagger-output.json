@@ -1035,6 +1035,11 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "categoryIds",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
