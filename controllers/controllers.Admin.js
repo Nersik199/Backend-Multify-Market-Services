@@ -536,6 +536,7 @@ export default {
 				maxPrice = Number.MAX_VALUE,
 				limit = 10,
 				page = 1,
+				categoryIds,
 			} = req.query;
 
 			const user = await StoreAdmin.findOne({ where: { userId: id } });
@@ -544,6 +545,13 @@ export default {
 				res.status(404).json({ message: 'Store not found for this user' });
 				return;
 			}
+
+			const categoryArray = categoryIds
+				? categoryIds
+						.split(',')
+						.map(id => parseInt(id, 10))
+						.filter(id => !isNaN(id))
+				: [];
 
 			const total = await Products.count({
 				where: {
@@ -554,7 +562,18 @@ export default {
 						[Op.between]: [minPrice, maxPrice],
 					},
 				},
+				include: categoryArray.length
+					? [
+							{
+								model: ProductCategories,
+								as: 'categories',
+								where: { categoryId: { [Op.in]: categoryArray } },
+								required: true,
+							},
+					  ]
+					: [],
 			});
+
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
 			if (page > maxPageCount) {
@@ -581,6 +600,15 @@ export default {
 						model: Stores,
 						attributes: ['name'],
 						where: { id: user.storeId },
+					},
+					{
+						model: ProductCategories,
+						as: 'categories',
+						required: categoryArray.length > 0,
+						where: categoryArray.length
+							? { categoryId: { [Op.in]: categoryArray } }
+							: undefined,
+						attributes: ['categoryId'],
 					},
 				],
 				limit: +limit,
