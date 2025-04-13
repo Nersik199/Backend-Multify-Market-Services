@@ -1,27 +1,32 @@
-import { Server } from 'socket.io';
+import { Server } from "socket.io";
 
-const setupSocketIO = server => {
-	const io = new Server(server, {
-		cors: {
-			origin: '*',
-			methods: ['GET', 'POST'],
-		},
-	});
+const setupSocketIO = (server) => {
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  });
 
-	global.io = io;
+  global.io = io;
 
-	io.on('connection', socket => {
-		console.log('User connected:', socket.id);
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
 
-		socket.on('register', userId => {
-			socket.join(`user_${userId}`);
-			console.log(`User ${userId} subscribed to notifications`);
-		});
+    socket.on("register", (userId) => {
+      socket.join(`user_${userId}`);
+      console.log(`User ${userId} subscribed to notifications`);
+    });
 
-		socket.on('disconnect', () => {
-			console.log('User disconnected:', socket.id);
-		});
-	});
+    socket.on("join_room", (room) => {
+      socket.join(room);
+      console.log(`Socket ${socket.id} joined room: ${room}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+  });
 };
 
 export default setupSocketIO;
