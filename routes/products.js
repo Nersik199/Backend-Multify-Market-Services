@@ -1,38 +1,38 @@
-import { Router } from 'express';
-import cron from 'node-cron';
+import { Router } from "express";
+import cron from "node-cron";
 
-import controllers from '../controllers/controllers.Product.js';
-import validate from '../middleware/validate.js';
+import controllers from "../controllers/controllers.Product.js";
+import validate from "../middleware/validate.js";
 
-import productSchema from '../schemas/product.js';
+import productSchema from "../schemas/product.js";
 
 const router = Router();
 
-router.get('/stores', controllers.getStores);
+router.get("/stores", controllers.getStores);
 router.get(
-	'/list',
-	validate(productSchema.searchAndFilterProducts, 'query'),
-	controllers.searchAndFilterProducts
+  "/list",
+  validate(productSchema.searchAndFilterProducts, "query"),
+  controllers.searchAndFilterProducts
 );
-router.get('/popular', controllers.getMostPopularProducts);
-router.get('/discounts', controllers.getDiscounts);
+router.get("/popular", controllers.getMostPopularProducts);
+router.get("/discounts", controllers.getDiscounts);
 router.get(
-	'/:id',
-	validate(productSchema.getProductById, 'query'),
-	controllers.getProductById
+  "/:id",
+  validate(productSchema.getProductById, "query"),
+  controllers.getProductById
 );
 router.get(
-	'/list/:categoryId',
-	validate(productSchema.getProductsByCategory, 'query'),
-	controllers.getProductsByCategory
+  "/list/:categoryId",
+  validate(productSchema.getProductsByCategory, "query"),
+  controllers.getProductsByCategory
 );
 
-cron.schedule('0 0 * * *', async () => {
-	try {
-		await controllers.removeExpiredDiscounts();
-	} catch (error) {
-		console.error('[CRON] Error removing expired discounts:', error);
-	}
+cron.schedule("0 0 * * *", async () => {
+  try {
+    await controllers.removeExpiredDiscounts();
+  } catch (error) {
+    console.error("[CRON] Error removing expired discounts:", error);
+  }
 });
 
 export default router;
