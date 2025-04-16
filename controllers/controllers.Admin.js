@@ -14,7 +14,7 @@ import Reviews from "../models/Reviews.js";
 import Payments from "../models/Payments.js";
 // utils
 import updateImages from "../utils/updateImages.js";
-import sendReviewReplyNotification from "../socket/notificationService.js";
+import notification from "../socket/notificationService.js";
 
 const calculatePagination = (page, limit, total) => {
   const maxPageCount = Math.ceil(total / limit);
@@ -781,7 +781,12 @@ export default {
         path: product.productImage?.[0]?.path || null,
       };
 
-      sendReviewReplyNotification(review.userId, reply, seller, productData);
+      notification.sendReviewReplyNotification(
+        review.userId,
+        reply,
+        seller,
+        productData
+      );
 
       res.status(201).json(newReply);
     } catch (error) {
