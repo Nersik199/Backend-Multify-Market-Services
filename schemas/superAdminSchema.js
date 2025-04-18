@@ -1,4 +1,3 @@
-import { name } from 'ejs';
 import Joi from 'joi';
 
 export default {
@@ -25,5 +24,10 @@ export default {
 			latitude: Joi.number().optional(),
 			longitude: Joi.number().optional(),
 		}).optional(),
+	}),
+
+	removeAdmin: Joi.object({
+		adminId: Joi.number().required(),
+		storeId: Joi.number().required(),
 	}),
 };

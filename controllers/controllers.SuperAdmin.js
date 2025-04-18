@@ -1,6 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Op, Sequelize } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 // Models
 import Photo from '../models/Photo.js';
 import Users from '../models/Users.js';
@@ -8,6 +7,7 @@ import Stores from '../models/Stores.js';
 import StoreAdmin from '../models/StoreAdmin.js';
 import Payments from '../models/Payments.js';
 import Products from '../models/Products.js';
+
 export default {
 	createStore: async (req, res) => {
 		try {
@@ -86,6 +86,104 @@ export default {
 			console.log(error);
 			res.status(500).json({
 				message: 'Error fetching stores',
+			});
+		}
+	},
+
+	getAdminStore: async (req, res) => {
+		try {
+			const { id } = req.user;
+			const { storeId } = req.params;
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view this store',
+				});
+			}
+
+			const store = await StoreAdmin.findAll({
+				where: { storeId },
+				attributes: ['storeId'],
+				include: [
+					{
+						model: Users,
+						attributes: ['id', 'email', 'role'],
+						include: {
+							model: Photo,
+							as: 'avatar',
+							attributes: ['path'],
+						},
+					},
+				],
+			});
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+			return res.status(200).json({
+				store,
+				message: 'Store fetched successfully',
+			});
+		} catch (error) {
+			console.error('Error fetching store:', error);
+			res.status(500).json({
+				message: 'Error fetching store',
+			});
+		}
+	},
+
+	updateAdminInUser: async (req, res) => {
+		try {
+			const { id } = req.user;
+			const { adminId, storeId } = req.body;
+
+			if (!storeId || !adminId) {
+				return res.status(400).json({
+					message: 'Please provide storeId and adminId in the request body',
+				});
+			}
+
+			const superAdmin = await Users.findByPk(id);
+			if (!superAdmin || superAdmin.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to update this store',
+				});
+			}
+
+			const user = await Users.findOne({
+				where: { id: adminId, role: 'admin' },
+			});
+			if (!user) {
+				return res.status(401).json({
+					message: 'Admin not found',
+				});
+			}
+
+			const store = await StoreAdmin.destroy({
+				where: { storeId, userId: adminId },
+			});
+
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			await Users.update(
+				{ role: 'user' },
+				{
+					where: { id: adminId },
+				}
+			);
+
+			return res.status(200).json({
+				message: 'admin removed successfully',
+			});
+		} catch (error) {
+			console.error('Error updating store:', error);
+			res.status(500).json({
+				message: 'Error updating store',
 			});
 		}
 	},
