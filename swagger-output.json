@@ -103,7 +103,7 @@
                 "email": {
                   "example": "any"
                 },
-                "storeName": {
+                "storeId": {
                   "example": "any"
                 }
               }
