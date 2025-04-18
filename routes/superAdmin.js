@@ -36,4 +36,11 @@ router.put(
 	validate(superAdminSchema.updateStore, 'body'),
 	controllers.updateStore
 );
+router.get('/stores/admins/:storeId', checkToken, controllers.getAdminStore);
+router.put(
+	'/remove-admin',
+	checkToken,
+	validate(superAdminSchema.removeAdmin, 'body'),
+	controllers.updateAdminInUser
+);
 export default router;
