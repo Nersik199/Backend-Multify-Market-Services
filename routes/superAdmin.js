@@ -28,5 +28,12 @@ router.post(
 );
 router.get('/statistics/:storeId', checkToken, controllers.getStatistics);
 router.get('/stores/:storeId/buyers', checkToken, controllers.getBuyers);
-
+router.delete('/stores/:storeId', checkToken, controllers.deleteStore);
+router.put(
+	'/stores/:storeId',
+	checkToken,
+	uploadFile('Store').single('logo'),
+	validate(superAdminSchema.updateStore, 'body'),
+	controllers.updateStore
+);
 export default router;
