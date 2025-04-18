@@ -191,7 +191,7 @@ export default {
 	setupUserStore: async (req, res) => {
 		try {
 			const { id } = req.user;
-			const { email, storeName } = req.body;
+			const { email, storeId } = req.body;
 			const admin = await Users.findByPk(id);
 
 			if (!admin || admin.role !== 'superAdmin') {
@@ -204,7 +204,7 @@ export default {
 				where: { email: email.trim().toLowerCase() },
 			});
 			const store = await Stores.findOne({
-				where: { name: storeName.trim().toLowerCase() },
+				where: { id: storeId },
 			});
 
 			if (!user || !store) {
@@ -222,6 +222,13 @@ export default {
 					message: 'User already has a store',
 				});
 			}
+
+			await Users.update(
+				{ role: 'admin' },
+				{
+					where: { id: user.id },
+				}
+			);
 
 			await StoreAdmin.create({
 				userId: user.id,

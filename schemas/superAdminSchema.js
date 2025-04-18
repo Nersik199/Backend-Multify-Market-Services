@@ -13,7 +13,7 @@ export default {
 
 	setupUserStore: Joi.object({
 		email: Joi.string().required(),
-		storeName: Joi.string().required(),
+		storeId: Joi.number().required(),
 	}),
 
 	updateStore: Joi.object({
