@@ -1,3 +1,6 @@
+import cron from 'node-cron';
+import { Op } from 'sequelize';
+
 import yookassa from '../config/yookassaConfig.js';
 import Products from '../models/Products.js';
 import Payments from '../models/Payments.js';
@@ -10,6 +13,33 @@ const calculatePagination = (page, limit, total) => {
 	const offset = (page - 1) * limit;
 	return { maxPageCount, offset };
 };
+
+cron.schedule(
+	'0 0 * * *',
+	async () => {
+		try {
+			const updatedRows = await Payments.update(
+				{ deliveryDate: 0 },
+				{
+					where: {
+						deliveryDate: {
+							[Op.lt]: Date.now(),
+						},
+					},
+				}
+			);
+			console.log(
+				`Cron Job: Updated ${updatedRows[0]} rows where deliveryDate expired.`
+			);
+		} catch (error) {
+			console.error('Error in cron job for updating delivery status:', error);
+		}
+	},
+	{
+		scheduled: true,
+		timezone: 'UTC',
+	}
+);
 
 export default {
 	async payment(req, res) {

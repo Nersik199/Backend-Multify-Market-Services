@@ -43,4 +43,10 @@ router.put(
 	validate(superAdminSchema.removeAdmin, 'body'),
 	controllers.updateAdminInUser
 );
+
+router.get(
+	'/stores/all-statistics',
+	checkToken,
+	controllers.getAllStoresStatistics
+);
 export default router;

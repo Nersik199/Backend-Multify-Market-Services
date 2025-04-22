@@ -597,4 +597,118 @@ export default {
 			});
 		}
 	},
+	getAllStoresStatistics: async (req, res) => {
+		try {
+			const { id } = req.user;
+			let { startDate, endDate } = req.query;
+
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view statistics',
+				});
+			}
+
+			if (!startDate || !endDate) {
+				const now = new Date();
+				const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+				const lastDayOfMonth = new Date(
+					now.getFullYear(),
+					now.getMonth() + 1,
+					0
+				);
+
+				startDate = firstDayOfMonth.toISOString().split('T')[0];
+				endDate = lastDayOfMonth.toISOString().split('T')[0];
+			}
+
+			const start = new Date(startDate);
+			const end = new Date(endDate);
+
+			if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+				return res.status(400).json({
+					message: 'Invalid date format. Please use YYYY-MM-DD',
+				});
+			}
+
+			const stores = await Stores.findAll({
+				attributes: ['id', 'name', 'location'],
+			});
+
+			if (!stores.length) {
+				return res.status(404).json({
+					message: 'No stores found',
+				});
+			}
+
+			const statistics = [];
+			await Promise.all(
+				stores.map(async store => {
+					const productCount = await Products.count({
+						where: { storeId: store.id },
+					});
+
+					const totalRevenue = await Payments.sum('amount', {
+						where: {
+							storeId: store.id,
+							createdAt: { [Op.between]: [start, end] },
+						},
+					});
+
+					const totalOrders = await Payments.count({
+						where: {
+							storeId: store.id,
+							status: 'paid',
+							createdAt: { [Op.between]: [start, end] },
+						},
+					});
+
+					const salesStatistics = await Payments.findAll({
+						attributes: [
+							[
+								Sequelize.literal("DATE_FORMAT(createdAt, '%Y-%m-%d')"),
+								'interval',
+							],
+							[Sequelize.fn('SUM', Sequelize.col('amount')), 'totalRevenue'],
+							[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalSales'],
+						],
+						where: {
+							storeId: store.id,
+							createdAt: { [Op.between]: [start, end] },
+						},
+						group: ['interval'],
+						order: [['interval', 'ASC']],
+						raw: true,
+					});
+
+					statistics.push({
+						storeId: store.id,
+						storeName: store.name,
+						totalRevenue: totalRevenue || 0,
+						totalSales: salesStatistics.reduce(
+							(sum, stat) => sum + parseFloat(stat.totalSales),
+							0
+						),
+						totalOrders: totalOrders || 0,
+						productCount: productCount || 0,
+						statistics: salesStatistics.map(stat => ({
+							interval: stat.interval,
+							totalRevenue: parseFloat(stat.totalRevenue),
+							totalSales: parseInt(stat.totalSales, 10),
+						})),
+					});
+				})
+			);
+
+			res.status(200).json({
+				data: statistics,
+				message: 'Sales statistics for all stores fetched successfully',
+			});
+		} catch (error) {
+			console.error('Error fetching statistics for all stores:', error);
+			res.status(500).json({
+				message: 'Error fetching statistics for all stores',
+			});
+		}
+	},
 };
