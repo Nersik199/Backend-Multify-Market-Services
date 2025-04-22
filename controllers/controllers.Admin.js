@@ -27,6 +27,13 @@ export default {
 		try {
 			const categories = await Categories.findAll({
 				attributes: ['id', 'name'],
+				include: [
+					{
+						model: Photo,
+						as: 'categoryImage',
+						attributes: ['id', 'path'],
+					},
+				],
 				order: [['name', 'ASC']],
 			});
 			res.status(200).json({
