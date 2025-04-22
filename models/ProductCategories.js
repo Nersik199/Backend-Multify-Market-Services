@@ -21,6 +21,10 @@ ProductCategories.init(
 			type: DataTypes.BIGINT.UNSIGNED,
 			allowNull: false,
 		},
+		storeId: {
+			type: DataTypes.BIGINT.UNSIGNED,
+			allowNull: false,
+		},
 	},
 	{
 		sequelize,
