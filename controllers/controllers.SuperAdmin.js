@@ -633,6 +633,7 @@ export default {
 
 			const stores = await Stores.findAll({
 				attributes: ['id', 'name', 'location'],
+				order: [['id', 'ASC']],
 			});
 
 			if (!stores.length) {

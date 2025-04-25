@@ -521,4 +521,42 @@ export default {
 			res.status(500).json({ message: 'Server error' });
 		}
 	},
+
+	async deleteAvatar(req, res) {
+		try {
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id, {
+				include: [
+					{
+						model: Photo,
+						as: 'avatar',
+						attributes: ['id', 'path'],
+					},
+				],
+			});
+
+			if (!user) {
+				return res.status(404).json({ message: 'User not found' });
+			}
+
+			if (user.avatar.length > 0) {
+				const publicId = `avatar/${user.avatar[0].path
+					.split('/')
+					.pop()
+					.split('.')
+					.slice(0, -1)
+					.join('.')}`;
+
+				await cloudinary.uploader.destroy(publicId);
+
+				await Photo.destroy({ where: { userId: user.id } });
+			}
+
+			res.status(200).json({ message: 'Avatar deleted successfully' });
+		} catch (error) {
+			console.error('Error deleting avatar:', error);
+			res.status(500).json({ message: 'Internal server error' });
+		}
+	},
 };

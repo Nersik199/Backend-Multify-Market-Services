@@ -21,7 +21,7 @@
         }
       }
     },
-    "/superAdmin/stores/create": {
+    "/super-admin/stores/create": {
       "post": {
         "description": "",
         "parameters": [
@@ -62,7 +62,7 @@
         }
       }
     },
-    "/superAdmin/stores": {
+    "/super-admin/stores": {
       "get": {
         "description": "",
         "parameters": [
@@ -85,7 +85,7 @@
         }
       }
     },
-    "/superAdmin/stores/assign-user": {
+    "/super-admin/stores/assign-user": {
       "post": {
         "description": "",
         "parameters": [
@@ -132,7 +132,7 @@
         }
       }
     },
-    "/superAdmin/statistics/{storeId}": {
+    "/super-admin/statistics/{storeId}": {
       "get": {
         "description": "",
         "parameters": [
@@ -182,7 +182,7 @@
         }
       }
     },
-    "/superAdmin/stores/{storeId}/buyers": {
+    "/super-admin/stores/{storeId}/buyers": {
       "get": {
         "description": "",
         "parameters": [
@@ -224,7 +224,7 @@
         }
       }
     },
-    "/superAdmin/stores/{storeId}": {
+    "/super-admin/stores/{storeId}": {
       "delete": {
         "description": "",
         "parameters": [
@@ -304,7 +304,7 @@
         }
       }
     },
-    "/superAdmin/stores/admins/{storeId}": {
+    "/super-admin/stores/admins/{storeId}": {
       "get": {
         "description": "",
         "parameters": [
@@ -336,7 +336,7 @@
         }
       }
     },
-    "/superAdmin/remove-admin": {
+    "/super-admin/remove-admin": {
       "put": {
         "description": "",
         "parameters": [
@@ -383,7 +383,7 @@
         }
       }
     },
-    "/superAdmin/stores/all-statistics": {
+    "/super-admin/stores/all-statistics": {
       "get": {
         "description": "",
         "parameters": [
@@ -829,6 +829,32 @@
           },
           "422": {
             "description": "Unprocessable Entity"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/delete-avatar": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
