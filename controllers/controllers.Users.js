@@ -220,6 +220,7 @@ export default {
 					message: 'Login successful',
 					token,
 					isAdmin: true,
+					superAdmin: false,
 				});
 				return;
 			}
@@ -228,6 +229,7 @@ export default {
 				res.status(200).json({
 					message: 'Login successful',
 					token,
+					isAdmin: false,
 					superAdmin: true,
 				});
 				return;
