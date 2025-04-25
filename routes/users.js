@@ -68,4 +68,6 @@ router.delete(
 	controllers.deleteUser
 );
 
+router.delete('/delete-avatar', checkToken, controllers.deleteAvatar);
+
 export default router;
