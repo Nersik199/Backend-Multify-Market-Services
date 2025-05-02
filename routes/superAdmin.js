@@ -49,4 +49,6 @@ router.get(
 	checkToken,
 	controllers.getAllStoresStatistics
 );
+
+router.get('/all-users', checkToken, controllers.getAllUsers);
 export default router;
