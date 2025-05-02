@@ -8,6 +8,12 @@ import StoreAdmin from '../models/StoreAdmin.js';
 import Payments from '../models/Payments.js';
 import Products from '../models/Products.js';
 
+const calculatePagination = (page, limit, total) => {
+	const maxPageCount = Math.ceil(total / limit);
+	const offset = (page - 1) * limit;
+	return { maxPageCount, offset };
+};
+
 export default {
 	createStore: async (req, res) => {
 		try {
@@ -709,6 +715,79 @@ export default {
 			console.error('Error fetching statistics for all stores:', error);
 			res.status(500).json({
 				message: 'Error fetching statistics for all stores',
+			});
+		}
+	},
+
+	async getAllUsers(req, res) {
+		try {
+			const { id } = req.user;
+			const { limit = 10, page = 1 } = req.query;
+
+			const total = await Users.count({
+				where: {
+					role: {
+						[Op.not]: ['superAdmin'],
+					},
+				},
+			});
+			const { maxPageCount, offset } = calculatePagination(page, limit, total);
+
+			if (page > maxPageCount) {
+				res.status(404).json({ message: 'Page not found' });
+				return;
+			}
+
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view users',
+				});
+			}
+
+			const users = await Users.findAll({
+				attributes: [
+					'id',
+					'email',
+					'role',
+					'firstName',
+					'lastName',
+					'gender',
+					'dateOfBirth',
+					'status',
+					'resetCode',
+					'activationKey',
+					'createdAt',
+					'updatedAt',
+				],
+				where: {
+					role: {
+						[Op.not]: ['superAdmin'],
+					},
+				},
+				include: [
+					{
+						model: Photo,
+						as: 'avatar',
+						attributes: ['path'],
+					},
+				],
+				order: [['id', 'DESC']],
+				limit: +limit,
+				offset,
+			});
+
+			res.status(200).json({
+				users,
+				total,
+				currentPage: page,
+				maxPageCount,
+				message: 'Users fetched successfully',
+			});
+		} catch (error) {
+			console.error('Error fetching users:', error);
+			res.status(500).json({
+				message: 'Error fetching users',
 			});
 		}
 	},
