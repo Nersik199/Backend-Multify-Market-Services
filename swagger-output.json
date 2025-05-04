@@ -440,6 +440,11 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -451,6 +456,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
           },
           "500": {
             "description": "Internal Server Error"

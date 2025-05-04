@@ -7,8 +7,8 @@ const { EMAIL, EMAIL_PASSWORD, EMAIL_HOTS } = process.env;
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
-		user: EMAIL,
-		pass: EMAIL_PASSWORD,
+		user: 'multifymarket@gmail.com',
+		pass: 'bkvu elhr nqzz xajg',
 	},
 });
 

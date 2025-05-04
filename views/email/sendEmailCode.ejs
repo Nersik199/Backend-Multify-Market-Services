@@ -3,93 +3,72 @@
 		max-width: 600px;
 		margin: 0 auto;
 		font-family: Arial, sans-serif;
-		background-color: #222;
-		color: #fff;
+		background-color: #f9f9f9;
+		color: #333;
 		padding: 20px;
-		border-radius: 15px;
+		border-radius: 10px;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 	"
 >
-	<h1 style="font-size: 28px; color: #f1c40f; text-align: center">
-		Welcome, <span style="color: #fff"><%= fullName %></span>
-	</h1>
-	<h2 style="font-size: 20px; text-align: center; color: #ecf0f1">Your code</h2>
-	<div
-		style="display: flex; justify-content: center; gap: 10px; margin: 20px 0"
-	>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code1 %>
-		</div>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code2 %>
-		</div>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code3 %>
-		</div>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code4 %>
-		</div>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code5 %>
-		</div>
-		<div
-			style="
-				font-size: 18px;
-				padding: 10px;
-				background-color: #fff;
-				font-weight: bold;
-				color: #000;
-				border-radius: 5px;
-			"
-		>
-			<%= code6 %>
-		</div>
+	<!-- Логотип -->
+	<div style="text-align: center; margin-bottom: 20px">
+		<img
+			src="https://w7.pngwing.com/pngs/25/70/png-transparent-spotify-logo-streaming-media-music-spotify-logo-text-business-symbol-thumbnail.png"
+			alt="Multify Logo"
+			style="max-width: 150px"
+		/>
 	</div>
-	<p style="text-align: center; font-size: 14px; color: #bbb">
-		Copy and paste the codes above wherever needed.
+
+	<!-- Приветствие -->
+	<h1
+		style="
+			font-size: 24px;
+			color: #2c3e50;
+			text-align: center;
+			margin-bottom: 10px;
+		"
+	>
+		Welcome to Multify, <%= fullName %>!
+	</h1>
+	<p
+		style="
+			font-size: 16px;
+			text-align: center;
+			color: #555;
+			margin-bottom: 20px;
+		"
+	>
+		Thank you for joining <strong>Multify</strong>, the ultimate platform for
+		builders and construction professionals. We're excited to have you on board!
+	</p>
+
+	<!-- Код подтверждения -->
+	<h2
+		style="
+			font-size: 18px;
+			text-align: center;
+			color: #2c3e50;
+			margin-bottom: 10px;
+		"
+	>
+		Your Verification Code
+	</h2>
+	<p style="text-align: center; font-size: 18px; font-weight: bold">
+		<%= code1 %> <%= code2 %> <%= code3 %> <%= code4 %> <%= code5 %> <%= code6
+		%>
+	</p>
+
+	<!-- Дополнительная информация -->
+	<p style="text-align: center; font-size: 14px; color: #777; margin-top: 20px">
+		Copy and paste the codes above to verify your account and start exploring
+		Multify.
+	</p>
+	<p style="text-align: center; font-size: 14px; color: #777; margin-top: 10px">
+		Need help? Contact us at
+		<a
+			href="mailto:support@multify.com"
+			style="color: #3498db; text-decoration: none"
+			>multifymarket@gmail.com</a
+		>.
 	</p>
 </div>
