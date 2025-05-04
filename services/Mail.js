@@ -2,24 +2,24 @@ import path from 'path';
 import ejs from 'ejs';
 import nodemailer from 'nodemailer';
 
-const { EMAIL, EMAIL_PASSWORD } = process.env;
-
-// const transporter = nodemailer.createTransport({
-// 	service: 'gmail',
-// 	auth: {
-// 		user: EMAIL,
-// 		pass: EMAIL_PASSWORD,
-// 	},
-// });
+const { EMAIL, EMAIL_PASSWORD, EMAIL_HOTS } = process.env;
 
 const transporter = nodemailer.createTransport({
-	host: 'smtp.ethereal.email',
-	port: 587,
+	service: 'gmail',
 	auth: {
-		user: 'ebba93@ethereal.email',
-		pass: 'A7HKqP5t5UTEVvbf9e',
+		user: EMAIL,
+		pass: EMAIL_PASSWORD,
 	},
 });
+
+// const transporter = nodemailer.createTransport({
+// 	host: 'smtp.ethereal.email',
+// 	port: 587,
+// 	auth: {
+// 		user: 'ebba93@ethereal.email',
+// 		pass: 'A7HKqP5t5UTEVvbf9e',
+// 	},
+// });
 
 export const sendMail = async ({
 	to,
