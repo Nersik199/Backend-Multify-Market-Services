@@ -30,4 +30,10 @@ export default {
 		adminId: Joi.number().required(),
 		storeId: Joi.number().required(),
 	}),
+
+	getAllUser: Joi.object({
+		role: Joi.string().valid('admin', 'user').optional(),
+		page: Joi.number().integer().min(1).default(1),
+		limit: Joi.number().integer().min(1).default(50),
+	}),
 };

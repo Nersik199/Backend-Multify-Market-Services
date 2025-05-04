@@ -50,5 +50,10 @@ router.get(
 	controllers.getAllStoresStatistics
 );
 
-router.get('/all-users', checkToken, controllers.getAllUsers);
+router.get(
+	'/all-users',
+	checkToken,
+	validate(superAdminSchema.getAllUser, 'query'),
+	controllers.getAllUsers
+);
 export default router;
