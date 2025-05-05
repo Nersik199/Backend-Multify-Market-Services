@@ -77,7 +77,6 @@ export default {
 
 				res.status(201).json({
 					message: 'User created successfully',
-					result: user,
 				});
 			} catch (error) {
 				await transaction.rollback();
@@ -159,9 +158,9 @@ export default {
 			await sendMail({
 				to: user.email,
 				subject: 'Resend Activation Key',
-				template: 'sendEmailCode',
+				template: 'ResendActivationKey',
 				templateData: {
-					fullName: `${user.firstName} ${user.lastName}`,
+					email: user.email,
 					code1: activationKey[0],
 					code2: activationKey[1],
 					code3: activationKey[2],
@@ -407,7 +406,7 @@ export default {
 			await sendMail({
 				to: user.email,
 				subject: 'Update password account',
-				template: 'sendEmailCode',
+				template: 'updatePassword',
 				templateData: {
 					fullName: `${user.firstName} ${user.lastName}`,
 					code1: resetCode[0],
@@ -449,7 +448,7 @@ export default {
 			await sendMail({
 				to: user.email,
 				subject: 'Resend password reset code',
-				template: 'sendEmailCode',
+				template: 'resendCode',
 				templateData: {
 					fullName: `${user.firstName} ${user.lastName}`,
 					code1: resetCode[0],
