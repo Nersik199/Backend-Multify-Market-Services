@@ -722,9 +722,8 @@ export default {
 	async getAllUsers(req, res) {
 		try {
 			const { id } = req.user;
-			const { limit = 10, page = 1, role = 'user' } = req.query;
+			const { limit = 10, page = 1, role } = req.query;
 
-			// Проверяем, что текущий пользователь - супер-админ
 			const user = await Users.findByPk(id);
 			if (!user || user.role !== 'superAdmin') {
 				return res.status(401).json({
@@ -732,19 +731,16 @@ export default {
 				});
 			}
 
-			// Условия для фильтрации
 			const whereCondition = {
 				role: {
-					[Op.not]: ['superAdmin'], // Исключаем супер-админов
+					[Op.not]: ['superAdmin'],
 				},
 			};
 
-			// Добавляем фильтр по роли, если указан
 			if (role) {
 				whereCondition.role = role;
 			}
 
-			// Считаем общее количество пользователей
 			const total = await Users.count({ where: whereCondition });
 			const { maxPageCount, offset } = calculatePagination(page, limit, total);
 
@@ -752,7 +748,6 @@ export default {
 				return res.status(404).json({ message: 'Page not found' });
 			}
 
-			// Получаем пользователей с фильтрацией и пагинацией
 			const users = await Users.findAll({
 				attributes: [
 					'id',
