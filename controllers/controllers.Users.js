@@ -77,6 +77,7 @@ export default {
 
 				res.status(201).json({
 					message: 'User created successfully',
+					result: user,
 				});
 			} catch (error) {
 				await transaction.rollback();
