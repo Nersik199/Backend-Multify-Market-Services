@@ -32,7 +32,6 @@ export default {
 			}
 
 			const stores = await Stores.findAll({
-				attributes: ['id', 'name', 'location'],
 				include: [
 					{
 						model: Photo,
