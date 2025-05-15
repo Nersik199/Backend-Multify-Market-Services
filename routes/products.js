@@ -27,6 +27,8 @@ router.get(
 	controllers.getProductsByCategory
 );
 
+router.get('/store/information/:id', controllers.getStoreById);
+
 cron.schedule('0 0 * * *', async () => {
 	try {
 		await controllers.removeExpiredDiscounts();

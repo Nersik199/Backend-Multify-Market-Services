@@ -18,7 +18,7 @@ export default {
 	createStore: async (req, res) => {
 		try {
 			const { file = null } = req;
-			const { name, location } = req.body;
+			const { name, location, webSiteUrl, videoUrl, about } = req.body;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -31,6 +31,9 @@ export default {
 			const storeCreate = await Stores.create({
 				name: name.trim().toLowerCase(),
 				location,
+				webSiteUrl: webSiteUrl.trim(),
+				videoUrl: videoUrl.trim(),
+				about: about.trim(),
 				ownerId: user.id,
 			});
 
@@ -503,7 +506,7 @@ export default {
 	updateStore: async (req, res) => {
 		try {
 			const { storeId } = req.params;
-			const { name, location } = req.body;
+			const { name, location, webSiteUrl, videoUrl, about } = req.body;
 			const { id } = req.user;
 			const file = req.file;
 
@@ -547,6 +550,9 @@ export default {
 
 			await store.update({
 				name: name ? name.trim().toLowerCase() : store.name,
+				videoUrl: videoUrl || store.videoUrl,
+				webSiteUrl: webSiteUrl || store.webSiteUrl,
+				about: about || store.about,
 				location: location || store.location,
 			});
 
@@ -603,6 +609,7 @@ export default {
 			});
 		}
 	},
+
 	getAllStoresStatistics: async (req, res) => {
 		try {
 			const { id } = req.user;
@@ -719,7 +726,7 @@ export default {
 		}
 	},
 
-	async getAllUsers(req, res) {
+	getAllUsers: async (req, res) => {
 		try {
 			const { id } = req.user;
 			const { limit = 10, page = 1, role } = req.query;

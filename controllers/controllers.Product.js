@@ -54,6 +54,34 @@ export default {
 		}
 	},
 
+	async getStoreById(req, res) {
+		try {
+			const { id } = req.params;
+			if (!id) {
+				return res.status(400).json({ message: 'Store id is required' });
+			}
+			const store = await Stores.findOne({
+				where: { id },
+				include: [
+					{
+						model: Photo,
+						as: 'storeLogo',
+						attributes: ['path'],
+					},
+				],
+			});
+			if (!store) {
+				return res.status(404).json({ message: 'Store not found' });
+			}
+			return res.status(200).json({
+				store,
+				message: 'Store fetched successfully',
+			});
+		} catch (error) {
+			return handleErrorResponse(res, 500, 'Error fetching store', error);
+		}
+	},
+
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;

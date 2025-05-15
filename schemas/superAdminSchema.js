@@ -9,6 +9,9 @@ export default {
 			latitude: Joi.number().required(),
 			longitude: Joi.number().required(),
 		}).required(),
+		webSiteUrl: Joi.string().min(10).max(200).required(),
+		videoUrl: Joi.string().min(10).max(200).required(),
+		about: Joi.string().required(),
 	}),
 
 	setupUserStore: Joi.object({
@@ -24,6 +27,8 @@ export default {
 			latitude: Joi.number().optional(),
 			longitude: Joi.number().optional(),
 		}).optional(),
+		webSiteUrl: Joi.string().min(10).max(200).optional(),
+		videoUrl: Joi.string().min(10).max(200).optional(),
 	}),
 
 	removeAdmin: Joi.object({
