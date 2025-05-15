@@ -27,6 +27,7 @@ export default {
 			latitude: Joi.number().optional(),
 			longitude: Joi.number().optional(),
 		}).optional(),
+		about: Joi.string().optional(),
 		webSiteUrl: Joi.string().min(10).max(200).optional(),
 		videoUrl: Joi.string().min(10).max(200).optional(),
 	}),
