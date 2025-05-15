@@ -41,6 +41,15 @@
                 },
                 "location": {
                   "example": "any"
+                },
+                "webSiteUrl": {
+                  "example": "any"
+                },
+                "videoUrl": {
+                  "example": "any"
+                },
+                "about": {
+                  "example": "any"
                 }
               }
             }
@@ -279,6 +288,15 @@
                   "example": "any"
                 },
                 "location": {
+                  "example": "any"
+                },
+                "webSiteUrl": {
+                  "example": "any"
+                },
+                "videoUrl": {
+                  "example": "any"
+                },
+                "about": {
                   "example": "any"
                 }
               }
@@ -1707,6 +1725,30 @@
           },
           "422": {
             "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/products/store/information/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }

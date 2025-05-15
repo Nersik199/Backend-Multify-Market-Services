@@ -16,6 +16,18 @@ Stores.init(
 			type: DataTypes.STRING(255),
 			allowNull: false,
 		},
+		videoUrl: {
+			type: DataTypes.STRING(255),
+			allowNull: false,
+		},
+		webSiteUrl: {
+			type: DataTypes.STRING(255),
+			allowNull: false,
+		},
+		about: {
+			type: DataTypes.TEXT(),
+			allowNull: false,
+		},
 		location: {
 			type: DataTypes.JSON,
 			allowNull: true,
