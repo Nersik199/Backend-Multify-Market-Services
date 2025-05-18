@@ -78,7 +78,6 @@ export default {
 	getStores: async (req, res) => {
 		try {
 			const stores = await Stores.findAll({
-				attributes: ['id', 'name', 'location'],
 				include: [
 					{
 						model: Photo,
