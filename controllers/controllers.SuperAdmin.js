@@ -657,21 +657,39 @@ export default {
 			const statistics = [];
 			await Promise.all(
 				stores.map(async store => {
-					const productCount = await Products.count({
+					const productCountAllTime = await Products.count({
 						where: { storeId: store.id },
 					});
-
-					const totalRevenue = await Payments.sum('amount', {
+					const totalProductsSoldAllTime = await Payments.sum('quantity', {
 						where: {
 							storeId: store.id,
-							createdAt: { [Op.between]: [start, end] },
+							status: { [Op.in]: ['paid', 'received'] },
+						},
+					});
+					const totalRevenueAllTime = await Payments.sum('amount', {
+						where: {
+							storeId: store.id,
+							status: { [Op.in]: ['paid', 'received'] },
 						},
 					});
 
-					const totalOrders = await Payments.count({
+					const totalProductsSoldPeriod = await Payments.sum('quantity', {
 						where: {
 							storeId: store.id,
-							status: 'paid',
+							status: { [Op.in]: ['paid', 'received'] },
+							createdAt: { [Op.between]: [start, end] },
+						},
+					});
+					const totalRevenuePeriod = await Payments.sum('amount', {
+						where: {
+							storeId: store.id,
+							status: { [Op.in]: ['paid', 'received'] },
+							createdAt: { [Op.between]: [start, end] },
+						},
+					});
+					const totalProductPeriod = await Products.count({
+						where: {
+							storeId: store.id,
 							createdAt: { [Op.between]: [start, end] },
 						},
 					});
@@ -683,10 +701,11 @@ export default {
 								'interval',
 							],
 							[Sequelize.fn('SUM', Sequelize.col('amount')), 'totalRevenue'],
-							[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalSales'],
+							[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalOrders'],
 						],
 						where: {
 							storeId: store.id,
+							status: { [Op.in]: ['paid', 'received'] },
 							createdAt: { [Op.between]: [start, end] },
 						},
 						group: ['interval'],
@@ -697,22 +716,21 @@ export default {
 					statistics.push({
 						storeId: store.id,
 						storeName: store.name,
-						totalRevenue: totalRevenue || 0,
-						totalSales: salesStatistics.reduce(
-							(sum, stat) => sum + parseFloat(stat.totalSales),
-							0
-						),
-						totalOrders: totalOrders || 0,
-						productCount: productCount || 0,
+						productCountAllTime: productCountAllTime || 0,
+						totalProductsSoldAllTime: totalProductsSoldAllTime || 0,
+						totalRevenueAllTime: totalRevenueAllTime || 0,
+						totalProductsSoldPeriod: totalProductsSoldPeriod || 0,
+						totalRevenuePeriod: totalRevenuePeriod || 0,
+						totalProductPeriod: totalProductPeriod || 0,
 						statistics: salesStatistics.map(stat => ({
 							interval: stat.interval,
 							totalRevenue: parseFloat(stat.totalRevenue),
-							totalSales: parseInt(stat.totalSales, 10),
+							totalOrders: parseInt(stat.totalOrders, 10),
 						})),
 					});
 				})
 			);
-
+			statistics.sort((a, b) => a.storeId - b.storeId);
 			res.status(200).json({
 				data: statistics,
 				message: 'Sales statistics for all stores fetched successfully',
