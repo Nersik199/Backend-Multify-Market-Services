@@ -15,7 +15,7 @@ const calculatePagination = (page, limit, total) => {
 };
 
 cron.schedule(
-	'0 0 * * *',
+	'*/40 * * * *',
 	async () => {
 		try {
 			const updatedRows = await Payments.update(
@@ -34,11 +34,11 @@ cron.schedule(
 		} catch (error) {
 			console.error('Error in cron job for updating delivery status:', error);
 		}
-	},
-	{
-		scheduled: true,
-		timezone: 'UTC',
 	}
+	// {
+	// 	scheduled: true,
+	// 	timezone: 'UTC',
+	// }
 );
 
 export default {

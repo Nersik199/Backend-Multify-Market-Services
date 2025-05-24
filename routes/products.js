@@ -29,7 +29,7 @@ router.get(
 
 router.get('/store/information/:id', controllers.getStoreById);
 
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('*/40 * * * *', async () => {
 	try {
 		await controllers.removeExpiredDiscounts();
 	} catch (error) {
