@@ -654,40 +654,48 @@ export default {
 				});
 			}
 
+			let productCountAllTime = 0;
+			let totalProductsSoldAllTime = 0;
+			let totalRevenueAllTime = 0;
+			let totalProductsSoldPeriod = 0;
+			let totalRevenuePeriod = 0;
+			let totalProductPeriod = 0;
+
 			const statistics = [];
+
 			await Promise.all(
 				stores.map(async store => {
-					const productCountAllTime = await Products.count({
+					const productCount = await Products.count({
 						where: { storeId: store.id },
 					});
-					const totalProductsSoldAllTime = await Payments.sum('quantity', {
+					const productsSoldAllTime = await Payments.sum('quantity', {
 						where: {
 							storeId: store.id,
 							status: { [Op.in]: ['paid', 'received'] },
 						},
 					});
-					const totalRevenueAllTime = await Payments.sum('amount', {
+					const revenueAllTime = await Payments.sum('amount', {
 						where: {
 							storeId: store.id,
 							status: { [Op.in]: ['paid', 'received'] },
 						},
 					});
 
-					const totalProductsSoldPeriod = await Payments.sum('quantity', {
+					const productsSoldPeriod = await Payments.sum('quantity', {
 						where: {
 							storeId: store.id,
 							status: { [Op.in]: ['paid', 'received'] },
 							createdAt: { [Op.between]: [start, end] },
 						},
 					});
-					const totalRevenuePeriod = await Payments.sum('amount', {
+					const revenuePeriod = await Payments.sum('amount', {
 						where: {
 							storeId: store.id,
 							status: { [Op.in]: ['paid', 'received'] },
 							createdAt: { [Op.between]: [start, end] },
 						},
 					});
-					const totalProductPeriod = await Products.count({
+					const productPeriod = await Products.count({
 						where: {
 							storeId: store.id,
 							createdAt: { [Op.between]: [start, end] },
@@ -713,15 +721,16 @@ export default {
 						raw: true,
 					});
 
+					productCountAllTime += productCount || 0;
+					totalProductsSoldAllTime += productsSoldAllTime || 0;
+					totalRevenueAllTime += revenueAllTime || 0;
+					totalProductsSoldPeriod += productsSoldPeriod || 0;
+					totalRevenuePeriod += revenuePeriod || 0;
+					totalProductPeriod += productPeriod || 0;
+
 					statistics.push({
 						storeId: store.id,
 						storeName: store.name,
-						productCountAllTime: productCountAllTime || 0,
-						totalProductsSoldAllTime: totalProductsSoldAllTime || 0,
-						totalRevenueAllTime: totalRevenueAllTime || 0,
-						totalProductsSoldPeriod: totalProductsSoldPeriod || 0,
-						totalRevenuePeriod: totalRevenuePeriod || 0,
-						totalProductPeriod: totalProductPeriod || 0,
 						statistics: salesStatistics.map(stat => ({
 							interval: stat.interval,
 							totalRevenue: parseFloat(stat.totalRevenue),
@@ -730,9 +739,19 @@ export default {
 					});
 				})
 			);
+
 			statistics.sort((a, b) => a.storeId - b.storeId);
+
 			res.status(200).json({
-				data: statistics,
+				data: {
+					productCountAllTime,
+					totalProductsSoldAllTime,
+					totalRevenueAllTime,
+					totalProductsSoldPeriod,
+					totalRevenuePeriod,
+					totalProductPeriod,
+					statistics,
+				},
 				message: 'Sales statistics for all stores fetched successfully',
 			});
 		} catch (error) {
