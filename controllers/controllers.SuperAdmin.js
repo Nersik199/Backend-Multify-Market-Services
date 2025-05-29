@@ -257,7 +257,7 @@ export default {
 	getStatistics: async (req, res) => {
 		try {
 			const { storeId } = req.params;
-			let { startDate, endDate, groupBy = 'day' } = req.query;
+			let { startDate, endDate } = req.query;
 			const { id } = req.user;
 
 			const user = await Users.findByPk(id);
@@ -295,106 +295,88 @@ export default {
 				});
 			}
 
-			let groupInterval;
-			switch (groupBy) {
-				case 'year':
-					groupInterval = Sequelize.literal(
-						"DATE_FORMAT(createdAt, '%Y-01-01')"
-					);
-					break;
-				case 'month':
-					groupInterval = Sequelize.literal(
-						"DATE_FORMAT(createdAt, '%Y-%m-01')"
-					);
-					break;
-				case 'day':
-				default:
-					groupInterval = Sequelize.literal(
-						"DATE_FORMAT(createdAt, '%Y-%m-%d')"
-					);
-					break;
-			}
-
-			const productCount = await Products.count({
-				where: {
-					storeId,
-				},
+			const store = await Stores.findByPk(storeId, {
+				attributes: ['id', 'name', 'location'],
 			});
 
-			if (!productCount) {
+			if (!store) {
 				return res.status(404).json({
-					message: 'No products found for this store',
+					message: 'Store not found',
 				});
 			}
+
+			const productCountAllTime = await Products.count({
+				where: { storeId: store.id },
+			});
+			const totalProductsSoldAllTime = await Payments.sum('quantity', {
+				where: {
+					storeId: store.id,
+					status: { [Op.in]: ['paid', 'received'] },
+				},
+			});
+			const totalRevenueAllTime = await Payments.sum('amount', {
+				where: {
+					storeId: store.id,
+					status: { [Op.in]: ['paid', 'received'] },
+				},
+			});
+			const totalProductsSoldPeriod = await Payments.sum('quantity', {
+				where: {
+					storeId: store.id,
+					status: { [Op.in]: ['paid', 'received'] },
+					createdAt: { [Op.between]: [start, end] },
+				},
+			});
+			const totalRevenuePeriod = await Payments.sum('amount', {
+				where: {
+					storeId: store.id,
+					status: { [Op.in]: ['paid', 'received'] },
+					createdAt: { [Op.between]: [start, end] },
+				},
+			});
+			const totalProductPeriod = await Products.count({
+				where: {
+					storeId: store.id,
+					createdAt: { [Op.between]: [start, end] },
+				},
+			});
 
 			const salesStatistics = await Payments.findAll({
 				attributes: [
-					[groupInterval, 'interval'],
+					[Sequelize.literal("DATE_FORMAT(createdAt, '%Y-%m-%d')"), 'interval'],
 					[Sequelize.fn('SUM', Sequelize.col('amount')), 'totalRevenue'],
-					[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalSales'],
+					[Sequelize.fn('COUNT', Sequelize.col('id')), 'totalOrders'],
 				],
 				where: {
-					storeId,
-					createdAt: {
-						[Op.between]: [start, end],
-					},
+					storeId: store.id,
+					status: { [Op.in]: ['paid', 'received'] },
+					createdAt: { [Op.between]: [start, end] },
 				},
 				group: ['interval'],
-				order: [groupInterval],
+				order: [['interval', 'ASC']],
+				raw: true,
 			});
-
-			if (!salesStatistics.length) {
-				return res.status(200).json({
-					storeId,
-					totalRevenue: 0,
-					totalSales: 0,
-					totalOrders: 0,
-					productCount: 0,
-					statistics: [],
-					message: 'No sales statistics found for this store and period',
-				});
-			}
-
-			const totalRevenue = await Payments.sum('amount', {
-				where: {
-					storeId,
-				},
-			});
-
-			const totalSales = await Payments.sum('amount', {
-				where: {
-					storeId,
-					createdAt: {
-						[Op.between]: [start, end],
-					},
-				},
-			});
-
-			const totalOrders = await Payments.count({
-				where: {
-					storeId,
-					status: 'paid',
-					createdAt: {
-						[Op.between]: [start, end],
-					},
-				},
-				distinct: true,
-				col: 'id',
-			});
-
-			const statistics = salesStatistics.map(stat => ({
-				interval: stat.dataValues.interval,
-				totalRevenue: parseFloat(stat.dataValues.totalRevenue),
-				totalSales: parseInt(stat.dataValues.totalSales, 10),
-			}));
 
 			res.status(200).json({
-				storeId,
-				totalRevenue: totalRevenue || 0,
-				totalSales: totalSales || 0,
-				totalOrders: totalOrders || 0,
-				productCount: productCount || 0,
-				statistics,
+				data: {
+					productCountAllTime: productCountAllTime || 0,
+					totalProductsSoldAllTime: totalProductsSoldAllTime || 0,
+					totalRevenueAllTime: totalRevenueAllTime || 0,
+					totalProductsSoldPeriod: totalProductsSoldPeriod || 0,
+					totalRevenuePeriod: totalRevenuePeriod || 0,
+					totalProductPeriod: totalProductPeriod || 0,
+					statistics: [
+						{
+							storeId: store.id,
+							storeName: store.name,
+							statistics: salesStatistics.map(stat => ({
+								interval: stat.interval,
+								totalRevenue: parseFloat(stat.totalRevenue),
+								totalOrders: parseInt(stat.totalOrders, 10),
+							})),
+						},
+					],
+				},
 				message: 'Sales statistics for the store fetched successfully',
 			});
 		} catch (error) {
