@@ -151,4 +151,4 @@ Questions and suggestions — via Issues or Pull Requests.
 
 > **Multify Market** — your digital assistant in construction!
 
-**[🇷🇺 Русская версия](./documentation/README.ru.md)**
+**[🇷🇺 Ru ](./documentation/README.ru.md)**
