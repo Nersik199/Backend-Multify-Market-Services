@@ -7,11 +7,13 @@ export default {
 	}),
 
 	update: Joi.object({
-		quantity: Joi.number().integer().positive().required(),
+		add: Joi.number().integer().positive().optional(),
+		remove: Joi.number().integer().positive().optional(),
 	}),
+
 	getCards: Joi.object({
 		page: Joi.number().integer().min(1).max(10000000).default(1).optional(),
-		limit: Joi.number().integer().min(5).max(20).default(5).optional(),
+		limit: Joi.number().integer().min(5).max(100).default(5).optional(),
 	}),
 
 	delete: Joi.object({

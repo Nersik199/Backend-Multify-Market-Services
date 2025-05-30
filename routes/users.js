@@ -45,11 +45,29 @@ router.put(
 	controllers.changePassword
 );
 
-router.post('/forgot/password', controllers.forgotPassword);
+router.post(
+	'/forgot/password',
+	validate(userSchema.forgotPassword, 'body'),
+	controllers.forgotPassword
+);
 router.put(
 	'/update/password',
 	validate(userSchema.updatePassword, 'body'),
 	controllers.updatePassword
 );
+
+router.post(
+	'/resend-code',
+	validate(userSchema.resendCode, 'body'),
+	controllers.resendCode
+);
+
+router.delete(
+	'/delete-user',
+	validate(userSchema.delateUser, 'body'),
+	controllers.deleteUser
+);
+
+router.delete('/delete-avatar', checkToken, controllers.deleteAvatar);
 
 export default router;

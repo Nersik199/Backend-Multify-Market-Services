@@ -4,6 +4,7 @@ import sequelize from '../client/sequelize.mysql.js';
 import Users from './Users.js';
 import Stores from './Stores.js';
 import Products from './Products.js';
+import Categories from './Categories.js';
 class Photo extends Model {}
 
 Photo.init(
@@ -52,6 +53,16 @@ Products.hasMany(Photo, {
 });
 Photo.belongsTo(Products, {
 	foreignKey: 'productId',
+	onDelete: 'cascade',
+});
+
+Categories.hasMany(Photo, {
+	foreignKey: 'categoryId',
+	as: 'categoryImage',
+	onDelete: 'cascade',
+});
+Photo.belongsTo(Categories, {
+	foreignKey: 'categoryId',
 	onDelete: 'cascade',
 });
 

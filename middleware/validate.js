@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
+
 export default (schemas, target) => {
 	return async (req, res, next) => {
 		const { error } = schemas.validate(req[target], {
