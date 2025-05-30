@@ -74,13 +74,13 @@ World of Construction интегрирован с платёжной систе�
 ```
 backend/
 │
-├── documentation/        # Инструкция по запуску сервера (`run.md`)
+├── documentation/        # Инструкция по запуску сервера
 ├── app.js                # Инициализация приложения, middleware, роуты
 ├── bin/                  # Скрипты запуска
 ├── config/               # Конфиги (БД, Cloudinary, Passport, YooKassa)
-├── controllers/          # Бизнес-логика (User, Shop, Product, Order, Review, Payment)
+├── controllers/          # Бизнес-логика (User, Stores, Products, Review, Payments)
 ├── middleware/           # Авторизация, валидация, обработка ошибок
-├── models/               # Sequelize-модели (User, Shop, Product, Order, Review, Category, Payment)
+├── models/               # Sequelize-модели (User, Stores, Products, Review, Category, Payments)
 ├── public/               # Статика (логотип, изображения, CSS)
 │   └── logo.png          # Логотип сайта
 ├── routes/               # API и SSR маршруты

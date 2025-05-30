@@ -78,9 +78,9 @@ backend/
 ├── app.js                # App initialization, middleware, routes
 ├── bin/                  # Server start scripts
 ├── config/               # Configs (DB, Cloudinary, Passport, YooKassa)
-├── controllers/          # Business logic (User, Shop, Product, Order, Review, Payment)
+├── controllers/          # Business logic (User, Stores, Product, Review, Payments)
 ├── middleware/           # Authorization, validation, error handling
-├── models/               # Sequelize models (User, Shop, Product, Order, Review, Category, Payment)
+├── models/               # Sequelize models (User, Stores, Product, Review, Category, Payments)
 ├── public/               # Static files (logo, images, CSS)
 │   └── logo.png          # Site logo
 ├── routes/               # API and SSR routes

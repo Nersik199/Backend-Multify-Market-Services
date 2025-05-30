@@ -1,5 +1,10 @@
 {
 	"name": "world-of-construction",
+	"author": {
+		"name": "Nersik Militosyan",
+		"email": "militosyan13@gmail.com",
+		"url": "https://portfolio-2udl.onrender.com/"
+	},
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
