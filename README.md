@@ -1,36 +1,154 @@
-# World of Construction
-
-![Node.js](https://img.shields.io/badge/node.js-v14.17.5-green)
-![Express](https://img.shields.io/badge/Express-v4.17.1-blue)
-![Sequelize](https://img.shields.io/badge/Sequelize-v6.37.4-yellow)
-![MySQL](https://img.shields.io/badge/MySQL-v8.0.26-lightblue)
-![JWT](https://img.shields.io/badge/JWT-token-red)
-![Cloudinary](https://img.shields.io/badge/Cloudinary-v2.5.1-blue)
-![Cookie-parser](https://img.shields.io/badge/Cookie--parser-v1.4.4-yellow)
-![CORS](https://img.shields.io/badge/CORS-v2.8.5-lightgrey)
-![Debug](https://img.shields.io/badge/Debug-v2.6.9-orange)
-![Dotenv](https://img.shields.io/badge/Dotenv-v16.4.5-lightgreen)
-![EJS](https://img.shields.io/badge/EJS-v2.6.1-blue)
-![HTTP-errors](https://img.shields.io/badge/HTTP--errors-v1.6.3-red)
-![Joi](https://img.shields.io/badge/Joi-v17.13.3-blue)
-![MD5](https://img.shields.io/badge/MD5-v2.3.0-orange)
-![Morgan](https://img.shields.io/badge/Morgan-v1.9.1-lightblue)
-![Multer](https://img.shields.io/badge/Multer-v1.4.5--lts.1-green)
-![Multer-storage-cloudinary](https://img.shields.io/badge/Multer--storage--cloudinary-v4.0.0-blue)
-![Nodemailer](https://img.shields.io/badge/Nodemailer-v6.9.15-green)
-![Swagger-autogen](https://img.shields.io/badge/Swagger--autogen-v2.23.7-orange)
-![Swagger-jsdoc](https://img.shields.io/badge/Swagger--jsdoc-v6.2.8-green)
-![Swagger-ui-express](https://img.shields.io/badge/Swagger--ui--express-v5.0.1-lightgrey)
-![UUID](https://img.shields.io/badge/UUID-v10.0.0-blue)
-
-<p align="center" >
-  <img src="https://res.cloudinary.com/dutkekrpd/image/upload/v1731158665/gif/hi5nj1qopwt2xytn895n.gif" width="500" height="auto" style="border-radius: 12px;" />
+<p align="center">
+  <img src="public/img/logo.png" alt="Multify Market Logo" width="180" height="180"/>
 </p>
 
-**World of Construction** — это универсальная онлайн-платформа, созданная для связи строительных магазинов с клиентами, подрядчиками и строителями. Платформа упрощает поиск строительных материалов, инструментов и услуг, собирая все в одном удобном цифровом пространстве.
+# Backend Multify Market Services
 
-- **🛠️ Полный каталог магазинов**: Поиск магазинов по категориям, местоположению и специализации, что помогает клиентам быстро находить подходящих поставщиков.
-- **📦 Поиск и просмотр товаров**: Подробные каталоги участвующих магазинов с удобным поиском, позволяющие пользователям находить всё от инструментов до строительных материалов.
-- **🔒 Безопасные аккаунты и аутентификация**: Надежная регистрация с использованием JWT для защиты аккаунтов, позволяющая магазинам управлять своим ассортиментом, а клиентам — сохранять избранные магазины.
-- **⭐ Рейтинги и отзывы**: Отзывы сообщества, позволяющие пользователям оценивать магазины и делиться впечатлениями, помогая другим сделать правильный выбор.
-- **📊 Актуальные данные о наличии товаров**: Информация о наличии продукции напрямую из складских запасов магазинов (в разработке).
+**Multify Market** is a digital platform for searching, ordering, and managing construction materials, tools, and services. The project unites construction stores, contractors, craftsmen, and end customers in a single ecosystem.
+
+---
+
+## 🏗️ About the Project
+
+Multify Market automates the processes of searching, ordering, and delivering construction goods, as well as interaction between all market participants.  
+The platform provides:
+
+- A catalog of stores and products with filtering by category, price, and location.
+- Order system and order status tracking.
+- Personal account for stores, clients, and contractors.
+- Review and rating system.
+- Real-time notifications.
+- Secure authentication and authorization.
+- API documentation for integration with external services.
+- **Online payment system via YooKassa**.
+
+---
+
+## 💳 Payment System (YooKassa)
+
+Multify Market is integrated with the **YooKassa** payment system for accepting online payments.  
+Users can pay for orders by bank card, SBP, e-wallets, and other methods supported by YooKassa.
+
+**How payment works:**
+
+- After placing an order, the user selects a payment method.
+- The server creates a payment session via the YooKassa API.
+- The user is redirected to the secure YooKassa payment page.
+- After successful payment, the order status is automatically updated.
+- All payment events are processed via YooKassa webhooks for reliability.
+- Payment information (status, amount, method) is saved in the database and available in the user's and store's personal account.
+
+**Security:**
+
+- All payment data is transmitted only through secure YooKassa channels.
+- The server does not store bank card data.
+
+---
+
+## 🧩 Architecture and Components
+
+### Backend (Node.js + Express.js)
+
+- **REST API**: All business processes are implemented via RESTful API.
+- **WebSocket (Socket.io)**: For notifications about orders, messages, status changes.
+- **Authentication**: JWT for API, Google OAuth via Passport.js.
+- **Validation**: Joi for data validation at all levels.
+- **Documentation**: Swagger UI, auto-generated via swagger-autogen.
+- **Logging**: Morgan for HTTP requests, custom error middleware.
+- **Online payments**: Integration with YooKassa via official SDK and REST API.
+
+### Modules and Layers
+
+- **Controllers**: Request handling, business logic.
+- **Services**: Work with external services (email, cloud, payments, YooKassa).
+- **Models**: Sequelize models for working with the database.
+- **Middleware**: Authorization, validation, error handling.
+- **Routes**: Definition of all API and SSR routes.
+- **Socket**: Notification and chat logic.
+- **Utils**: Helpers (token generation, password hashing, etc.).
+
+---
+
+## 🗂️ Project Structure
+
+```
+backend/
+│
+├── documentation/        # Server launch instructions (`run.md`), environment variables description (`env.ru.md`)
+├── app.js                # App initialization, middleware, routes
+├── bin/                  # Server start scripts
+├── config/               # Configs (DB, Cloudinary, Passport, YooKassa)
+├── controllers/          # Business logic (User, Stores, Product, Review, Payments)
+├── middleware/           # Authorization, validation, error handling
+├── models/               # Sequelize models (User, Stores, Product, Review, Category, Payments)
+├── public/               # Static files (logo, images, CSS)
+│   └── logo.png          # Site logo
+├── routes/               # API and SSR routes
+├── schemas/              # Joi validation schemas
+├── services/             # Email, Cloudinary, payments, YooKassa
+├── socket/               # WebSocket logic
+├── utils/                # Helper functions
+├── views/                # EJS templates for SSR
+└── .env                  # Environment variables
+```
+
+---
+
+**🗂️ The `documentation/` folder contains:**
+
+- Detailed description of environment variables `.env` in
+- **[🇷🇺 Russian](./documentation/.env.example-Russian-language.md)**
+- **[🇬🇧 English](./documentation/.env.example-English-language.md)**
+
+## 🛠️ Technologies
+
+- **Node.js**, **Express.js**
+- **Sequelize**, **MySQL**
+- **Passport.js**, **JWT**, **Google OAuth**
+- **Socket.io**
+- **Swagger-autogen**, **swagger-ui-express**
+- **Multer**, **Cloudinary**
+- **Nodemailer**
+- **Joi**, **Morgan**, **dotenv**
+- **EJS** (SSR)
+- **YooKassa** (official SDK and REST API)
+
+---
+
+## 🔔 Notifications and Feedback
+
+- All important events (new order, status change, new review, successful payment) are sent via Socket.io in real time and duplicated by email.
+- The user and store are always aware of the status of their orders and payments.
+
+---
+
+## 🚀 Project Launch
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/Nersik199/Backend-Multify-Market-Services.git
+   cd backend
+   ```
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Configure environment variables in `.env` (see `.env.example`)
+4. Start the server:
+   ```
+   npm start
+   ```
+5. Open API documentation: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+
+---
+
+## 🤝 Contacts and Support
+
+The project is open for collaboration.  
+Questions and suggestions — via Issues or Pull Requests.
+
+---
+
+> **Multify Market** — your digital assistant in construction!
+
+**[🇷🇺 Ru ](./documentation/README.ru.md)**

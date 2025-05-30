@@ -35,5 +35,6 @@ router.delete(
 	validate(cardsSchema.delete, 'params'),
 	controller.delete
 );
+router.delete('/all', checkToken, controller.deleteAll);
 
 export default router;

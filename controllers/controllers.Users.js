@@ -1,9 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuid } from 'uuid';
-import jwt from 'jsonwebtoken';
 import Users from '../models/Users.js';
 import Photo from '../models/Photo.js';
-
 import { sendMail } from '../services/Mail.js';
 
 export default {
@@ -12,73 +10,83 @@ export default {
 			const { firstName, lastName, email, password, gender, dateOfBirth } =
 				req.body;
 			const { file = null } = req;
-			const mailExists = await Users.findOne({
-				where: { email },
-			});
+			const transaction = await Users.sequelize.transaction();
 
-			if (mailExists) {
-				if (file) {
-					await cloudinary.uploader.destroy(file.filename);
+			try {
+				const mailExists = await Users.findOne({
+					where: { email },
+					transaction,
+				});
+
+				if (mailExists) {
+					if (file) {
+						await cloudinary.uploader.destroy(file.filename);
+					}
+					await transaction.rollback();
+					return res.status(409).json({
+						message: 'Email already exists',
+						status: mailExists.status,
+					});
 				}
-				return res.status(409).json({
-					message: 'Email already exists',
-				});
-			}
-			const user = await Users.create({
-				firstName,
-				lastName,
-				gender,
-				dateOfBirth,
-				email: email.toLowerCase(),
-				password: password.trim(),
-			});
 
-			if (file) {
-				await Photo.create({
-					path: file.path,
-					userId: user.id,
-				});
-			}
-
-			const result = await Users.findByPk(user.id, {
-				include: [
+				const user = await Users.create(
 					{
-						model: Photo,
-						as: 'avatar',
-						attributes: ['path'],
+						firstName,
+						lastName,
+						gender,
+						dateOfBirth,
+						email: email.toLowerCase(),
+						password: password.trim(),
 					},
-				],
-			});
-			const activationKey = uuid().slice(0, 6);
+					{ transaction }
+				);
 
-			await Users.update(
-				{
-					activationKey,
-				},
-				{ where: { id: user.id } }
-			);
+				if (file) {
+					await Photo.create(
+						{
+							path: file.path,
+							userId: user.id,
+						},
+						{ transaction }
+					);
+				}
 
-			await sendMail({
-				to: result.email,
-				subject: 'welcome to world of construction',
-				template: 'sendEmailCode',
-				templateData: {
-					fullName: ` ${user.firstName} ${user.lastName}`,
-					code1: activationKey[0],
-					code2: activationKey[1],
-					code3: activationKey[2],
-					code4: activationKey[3],
-					code5: activationKey[4],
-					code6: activationKey[5],
-				},
-			});
-			res.status(201).json({
-				message: 'User created successfully',
-				result,
-			});
+				const activationKey = uuid().slice(0, 6);
+
+				await Users.update(
+					{ activationKey },
+					{ where: { id: user.id }, transaction }
+				);
+
+				await sendMail({
+					to: user.email,
+					subject: 'Welcome to the world of construction',
+					template: 'sendEmailCode',
+					templateData: {
+						fullName: ` ${user.firstName} ${user.lastName}`,
+						code1: activationKey[0],
+						code2: activationKey[1],
+						code3: activationKey[2],
+						code4: activationKey[3],
+						code5: activationKey[4],
+						code6: activationKey[5],
+					},
+				});
+
+				await transaction.commit();
+
+				res.status(201).json({
+					message: 'User created successfully',
+					result: user,
+				});
+			} catch (error) {
+				await transaction.rollback();
+				console.error(error);
+				res.status(500).json({ message: 'Registration failed' });
+			}
 		} catch (e) {
-			console.log(e);
-			res.status(500).json({ message: e.message });
+			console.error(e);
+			res.status(500).json({ message: 'Internal server error' });
 		}
 	},
 
@@ -151,9 +159,9 @@ export default {
 			await sendMail({
 				to: user.email,
 				subject: 'Resend Activation Key',
-				template: 'sendEmailCode',
+				template: 'ResendActivationKey',
 				templateData: {
-					fullName: `${user.firstName} ${user.lastName}`,
+					email: user.email,
 					code1: activationKey[0],
 					code2: activationKey[1],
 					code3: activationKey[2],
@@ -174,6 +182,7 @@ export default {
 			});
 		}
 	},
+
 	async login(req, res) {
 		try {
 			const { email, password } = req.body;
@@ -211,6 +220,7 @@ export default {
 					message: 'Login successful',
 					token,
 					isAdmin: true,
+					superAdmin: false,
 				});
 				return;
 			}
@@ -219,6 +229,7 @@ export default {
 				res.status(200).json({
 					message: 'Login successful',
 					token,
+					isAdmin: false,
 					superAdmin: true,
 				});
 				return;
@@ -280,7 +291,7 @@ export default {
 		try {
 			const { id } = req.user;
 			const { file = null } = req;
-			const { firstName, lastName, gender, dateOfBirth } = req.body;
+			const { firstName, lastName, gender, dateOfBirth, address } = req.body;
 
 			const user = await Users.findOne({
 				where: { id },
@@ -332,6 +343,7 @@ export default {
 					lastName,
 					gender,
 					dateOfBirth,
+					address,
 				},
 				{ where: { id } }
 			);
@@ -347,6 +359,7 @@ export default {
 			});
 		}
 	},
+
 	async changePassword(req, res) {
 		try {
 			const { id } = req.user;
@@ -394,7 +407,7 @@ export default {
 			await sendMail({
 				to: user.email,
 				subject: 'Update password account',
-				template: 'sendEmailCode',
+				template: 'updatePassword',
 				templateData: {
 					fullName: `${user.firstName} ${user.lastName}`,
 					code1: resetCode[0],
@@ -407,6 +420,48 @@ export default {
 			});
 
 			res.status(200).json({ message: 'Email sent successfully' });
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({ message: error.message });
+		}
+	},
+
+	async resendCode(req, res) {
+		try {
+			const { email } = req.body;
+
+			const user = await Users.findOne({ where: { email } });
+
+			if (!user) {
+				return res.status(404).json({ message: 'Wrong email address' });
+			}
+
+			if (user.status !== 'active') {
+				return res
+					.status(401)
+					.json({ message: 'Please activate your account' });
+			}
+
+			const resetCode = uuid().slice(0, 6);
+
+			await Users.update({ resetCode }, { where: { id: user.id } });
+
+			await sendMail({
+				to: user.email,
+				subject: 'Resend password reset code',
+				template: 'resendCode',
+				templateData: {
+					fullName: `${user.firstName} ${user.lastName}`,
+					code1: resetCode[0],
+					code2: resetCode[1],
+					code3: resetCode[2],
+					code4: resetCode[3],
+					code5: resetCode[4],
+					code6: resetCode[5],
+				},
+			});
+
+			res.status(200).json({ message: 'Reset code sent successfully' });
 		} catch (error) {
 			console.log(error);
 			res.status(500).json({ message: error.message });
@@ -440,6 +495,68 @@ export default {
 		} catch (error) {
 			console.log('Error:', error);
 			res.status(500).json({ message: error.message });
+		}
+	},
+
+	async deleteUser(req, res) {
+		try {
+			const { email } = req.body;
+
+			const user = await Users.findOne({ where: { email } });
+
+			if (!user) {
+				return res.status(404).json({ message: 'User not found' });
+			}
+
+			if (user.status !== 'pending') {
+				return res
+					.status(400)
+					.json({ message: 'User has already activated their account' });
+			}
+
+			await Users.destroy({ where: { email } });
+			return res.json({ message: 'User deleted successfully' });
+		} catch (error) {
+			console.error(error);
+			res.status(500).json({ message: 'Server error' });
+		}
+	},
+
+	async deleteAvatar(req, res) {
+		try {
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id, {
+				include: [
+					{
+						model: Photo,
+						as: 'avatar',
+						attributes: ['id', 'path'],
+					},
+				],
+			});
+
+			if (!user) {
+				return res.status(404).json({ message: 'User not found' });
+			}
+
+			if (user.avatar.length > 0) {
+				const publicId = `avatar/${user.avatar[0].path
+					.split('/')
+					.pop()
+					.split('.')
+					.slice(0, -1)
+					.join('.')}`;
+
+				await cloudinary.uploader.destroy(publicId);
+
+				await Photo.destroy({ where: { userId: user.id } });
+			}
+
+			res.status(200).json({ message: 'Avatar deleted successfully' });
+		} catch (error) {
+			console.error('Error deleting avatar:', error);
+			res.status(500).json({ message: 'Internal server error' });
 		}
 	},
 };

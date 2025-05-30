@@ -37,6 +37,7 @@ Users.hasMany(Cards, {
 
 Cards.belongsTo(Products, {
 	foreignKey: 'productId',
+	onDelete: 'cascade',
 	as: 'product',
 });
 

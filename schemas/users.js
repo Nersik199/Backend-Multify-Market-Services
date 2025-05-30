@@ -23,6 +23,7 @@ export default {
 		lastName: Joi.string().min(3).max(50).required(),
 		gender: Joi.string().min(3).max(50).required(),
 		dateOfBirth: Joi.date().required(),
+		address: Joi.string().min(3).max(50).required(),
 	}),
 
 	changePassword: Joi.object({
@@ -36,5 +37,17 @@ export default {
 
 	resetActivationKey: Joi.object({
 		email: Joi.string().email().required(),
+	}),
+
+	forgotPassword: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
+	}),
+
+	resendCode: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
+	}),
+
+	delateUser: Joi.object({
+		email: Joi.string().email().min(3).max(50).required(),
 	}),
 };

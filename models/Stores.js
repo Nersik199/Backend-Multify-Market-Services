@@ -16,6 +16,18 @@ Stores.init(
 			type: DataTypes.STRING(255),
 			allowNull: false,
 		},
+		videoUrl: {
+			type: DataTypes.STRING(255),
+			allowNull: false,
+		},
+		webSiteUrl: {
+			type: DataTypes.STRING(255),
+			allowNull: false,
+		},
+		about: {
+			type: DataTypes.TEXT(),
+			allowNull: false,
+		},
 		location: {
 			type: DataTypes.JSON,
 			allowNull: true,
@@ -39,3 +51,14 @@ Stores.belongsTo(Users, {
 });
 
 export default Stores;
+
+// Building materials
+// Construction chemicals
+// Electrical equipment
+// Insulation materials
+// Finishing materials
+// Plumbing
+// Ventilation and air conditioning
+// Windows and doors
+// Power tools
+// Hand tools
