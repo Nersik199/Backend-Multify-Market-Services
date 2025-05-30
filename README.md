@@ -133,12 +133,11 @@ backend/
    ```
    npm install
    ```
-3. Configure environment variables in `.env` (see `.env.example`)
-4. Start the server:
+3. Start the server:
    ```
    npm start
    ```
-5. Open API documentation: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+4. Open API documentation: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
 ---
 

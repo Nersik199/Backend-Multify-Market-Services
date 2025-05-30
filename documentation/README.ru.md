@@ -133,12 +133,11 @@ backend/
    ```
    npm install
    ```
-3. Настройте переменные окружения в `.env` (пример в `.env.example`)
-4. Запустите сервер:
+3. Запустите сервер:
    ```
    npm start
    ```
-5. Откройте документацию API: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+4. Откройте документацию API: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
 ---
 
