@@ -360,7 +360,7 @@ export default {
 			res.status(200).json({
 				data: {
 					productCountAllTime: productCountAllTime || 0,
-					totalProductsSoldAllTime: totalProductsSoldAllTime || 0,
+					totalProductsSoldAllTime: totalProductsSoldAllTime.toFixed() || 0,
 					totalRevenueAllTime: totalRevenueAllTime || 0,
 					totalProductsSoldPeriod: totalProductsSoldPeriod || 0,
 					totalRevenuePeriod: totalRevenuePeriod || 0,
@@ -605,15 +605,11 @@ export default {
 
 			if (!startDate || !endDate) {
 				const now = new Date();
-				const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-				const lastDayOfMonth = new Date(
-					now.getFullYear(),
-					now.getMonth() + 1,
-					0
-				);
+				const lastMonth = new Date(now);
+				lastMonth.setMonth(now.getMonth() - 1);
 
-				startDate = firstDayOfMonth.toISOString().split('T')[0];
-				endDate = lastDayOfMonth.toISOString().split('T')[0];
+				startDate = lastMonth.toISOString().split('T')[0];
+				endDate = now.toISOString().split('T')[0];
 			}
 
 			const start = new Date(startDate);
@@ -705,9 +701,13 @@ export default {
 
 					productCountAllTime += productCount || 0;
 					totalProductsSoldAllTime += productsSoldAllTime || 0;
-					totalRevenueAllTime += revenueAllTime || 0;
+					totalRevenueAllTime += revenueAllTime
+						? Number(revenueAllTime.toFixed())
+						: 0;
 					totalProductsSoldPeriod += productsSoldPeriod || 0;
-					totalRevenuePeriod += revenuePeriod || 0;
+					totalRevenuePeriod += revenuePeriod
+						? Number(revenuePeriod.toFixed())
+						: 0;
 					totalProductPeriod += productPeriod || 0;
 
 					statistics.push({
