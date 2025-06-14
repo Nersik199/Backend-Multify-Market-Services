@@ -127,7 +127,7 @@ backend/
 1. Clone the repository:
    ```
    git clone https://github.com/Nersik199/Backend-Multify-Market-Services.git
-   cd backend
+   cd Backend-Multify-Market-Services
    ```
 2. Install dependencies:
    ```
