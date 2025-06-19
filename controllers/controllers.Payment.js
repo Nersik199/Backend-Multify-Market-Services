@@ -14,32 +14,25 @@ const calculatePagination = (page, limit, total) => {
 	return { maxPageCount, offset };
 };
 
-cron.schedule(
-	'*/40 * * * *',
-	async () => {
-		try {
-			const updatedRows = await Payments.update(
-				{ deliveryDate: 0 },
-				{
-					where: {
-						deliveryDate: {
-							[Op.lt]: Date.now(),
-						},
+cron.schedule('*/40 * * * *', async () => {
+	try {
+		const updatedRows = await Payments.update(
+			{ deliveryDate: 0 },
+			{
+				where: {
+					deliveryDate: {
+						[Op.lt]: Date.now(),
 					},
-				}
-			);
-			console.log(
-				`Cron Job: Updated ${updatedRows[0]} rows where deliveryDate expired.`
-			);
-		} catch (error) {
-			console.error('Error in cron job for updating delivery status:', error);
-		}
+				},
+			}
+		);
+		console.log(
+			`Cron Job: Updated ${updatedRows[0]} rows where deliveryDate expired.`
+		);
+	} catch (error) {
+		console.error('Error in cron job for updating delivery status:', error);
 	}
-	// {
-	// 	scheduled: true,
-	// 	timezone: 'UTC',
-	// }
-);
+});
 
 export default {
 	async payment(req, res) {
