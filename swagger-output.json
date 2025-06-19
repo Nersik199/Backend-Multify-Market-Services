@@ -165,11 +165,6 @@
             "name": "endDate",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "groupBy",
-            "in": "query",
-            "type": "string"
           }
         ],
         "responses": {
@@ -1545,6 +1540,11 @@
         "description": "",
         "parameters": [
           {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
             "name": "s",
             "in": "query",
             "type": "string"
@@ -1561,11 +1561,6 @@
           },
           {
             "name": "storeId",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "userId",
             "in": "query",
             "type": "string"
           },
@@ -1600,8 +1595,8 @@
         "description": "",
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
+            "name": "authorization",
+            "in": "header",
             "type": "string"
           }
         ],
@@ -1620,6 +1615,11 @@
         "description": "",
         "parameters": [
           {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
             "name": "limit",
             "in": "query",
             "type": "string"
@@ -1631,11 +1631,6 @@
           },
           {
             "name": "storeId",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "userId",
             "in": "query",
             "type": "string"
           }
@@ -1664,8 +1659,8 @@
             "type": "string"
           },
           {
-            "name": "userId",
-            "in": "query",
+            "name": "authorization",
+            "in": "header",
             "type": "string"
           }
         ],

@@ -84,7 +84,7 @@ export default {
 	async getProductById(req, res) {
 		try {
 			const { id } = req.params;
-			const { userId } = req.query;
+			const userId = req.user?.id;
 			if (!id) {
 				return res.status(400).json({ message: 'Product id is required' });
 			}
@@ -277,20 +277,19 @@ export default {
 				minPrice = 0,
 				maxPrice = 100000,
 				storeId,
-				userId = null,
 				page = 1,
 				limit = 10,
-				categoryIds, // Получаем categoryIds из query
+				categoryIds,
 			} = req.query;
+
+			const userId = req.user?.id;
 
 			const whereClause = {};
 
-			// Поиск по названию
 			if (s) {
 				whereClause.name = { [Op.like]: `%${s}%` };
 			}
 
-			// Фильтрация по цене
 			if (minPrice && maxPrice) {
 				whereClause.price = { [Op.between]: [+minPrice, +maxPrice] };
 			} else if (minPrice) {
@@ -299,12 +298,10 @@ export default {
 				whereClause.price = { [Op.lte]: +maxPrice };
 			}
 
-			// Фильтрация по магазину
 			if (storeId) {
 				whereClause.storeId = storeId;
 			}
 
-			// Преобразуем categoryIds в массив
 			const categoryArray = categoryIds
 				? Array.isArray(categoryIds)
 					? categoryIds
@@ -422,7 +419,7 @@ export default {
 	},
 
 	async getMostPopularProducts(req, res) {
-		const { userId } = req.query;
+		const userId = req.user?.id;
 		try {
 			const popularProducts = await Payments.findAll({
 				attributes: [
@@ -571,7 +568,7 @@ export default {
 			const limit = Math.max(1, Number(req.query.limit) || 10);
 			const page = Math.max(1, Number(req.query.page) || 1);
 			const storeId = req.query.storeId ? Number(req.query.storeId) : null;
-			const userId = req.query.userId;
+			const userId = req.user?.id;
 
 			const storeFilter = storeId ? { id: storeId } : {};
 
