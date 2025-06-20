@@ -21,7 +21,6 @@ export default async (req, res, next) => {
 		}
 
 		req.user = decryptedData;
-		console.log(decryptedData);
 
 		next();
 	} catch (error) {
