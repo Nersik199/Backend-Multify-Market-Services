@@ -91,6 +91,13 @@ backend/
 ├── views/                # EJS templates for SSR
 └── .env                  # Environment variables
 ```
+---
+
+**🎨 Frontend**
+- Multify Market has a separate Frontend built with React.
+The frontend communicates with this backend server via REST API and WebSocket.
+
+- You can view the visual part of the project here: **[🔗  View the Website ](https://multify-market.onrender.com/)**
 
 ---
 
