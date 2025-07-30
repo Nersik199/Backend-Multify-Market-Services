@@ -5,7 +5,6 @@ import controllers from '../controllers/controllers.SuperAdmin.js';
 import checkToken from '../middleware/checkToken.js';
 import validate from '../middleware/validate.js';
 import uploadFile from '../middleware/uploadFile.js';
-
 import superAdminSchema from '../schemas/superAdminSchema.js';
 
 const router = Router();
@@ -55,5 +54,17 @@ router.get(
 	checkToken,
 	validate(superAdminSchema.getAllUser, 'query'),
 	controllers.getAllUsers
+);
+
+router.post(
+	'/create-category',
+	checkToken,
+	uploadFile('Categories').single('categoryImage'),
+	controllers.createCategory
+);
+router.delete(
+	'/delate-category/:categoryId',
+	checkToken,
+	controllers.delateCategory
 );
 export default router;

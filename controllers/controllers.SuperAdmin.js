@@ -7,6 +7,7 @@ import Stores from '../models/Stores.js';
 import StoreAdmin from '../models/StoreAdmin.js';
 import Payments from '../models/Payments.js';
 import Products from '../models/Products.js';
+import Categories from '../models/Categories.js';
 
 const calculatePagination = (page, limit, total) => {
 	const maxPageCount = Math.ceil(total / limit);
@@ -812,6 +813,84 @@ export default {
 			console.error('Error fetching users:', error);
 			res.status(500).json({
 				message: 'Error fetching users',
+			});
+		}
+	},
+
+	createCategory: async (req, res) => {
+		try {
+			const { id } = req.user;
+			const { name } = req.body;
+			const file = req.file;
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to create a category',
+				});
+			}
+
+			if (!name) {
+				return res.status(400).json({
+					message: 'Name is required',
+				});
+			}
+
+			if (!file) {
+				return res.status(400).json({
+					message: 'Category image is required',
+				});
+			}
+
+			const category = await Categories.create({
+				name: name.trim().toLowerCase(),
+			});
+			await Photo.create({
+				path: file.path,
+				categoryId: category.id,
+			});
+
+			res.status(201).json({
+				category,
+				message: 'Category created successfully',
+			});
+		} catch (error) {
+			console.error('Error creating category:', error);
+			res.status(500).json({
+				message: 'Error creating category',
+			});
+		}
+	},
+
+	delateCategory: async (req, res) => {
+		try {
+			const { id } = req.user;
+			const { categoryId } = req.params;
+
+			const user = await Users.findByPk(id);
+			if (!user || user.role !== 'superAdmin') {
+				return res.status(401).json({
+					message: 'You are not authorized to delete a category',
+				});
+			}
+
+			const category = await Categories.findByPk(categoryId);
+			if (!category) {
+				return res.status(404).json({
+					message: 'Category not found',
+				});
+			}
+
+			await category.destroy({
+				where: { id: categoryId },
+			});
+
+			res.status(200).json({
+				message: 'Category deleted successfully',
+			});
+		} catch (error) {
+			console.error('Error deleting category:', error);
+			res.status(500).json({
+				message: 'Error deleting category',
 			});
 		}
 	},

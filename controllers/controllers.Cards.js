@@ -68,12 +68,12 @@ export default {
 
 			const cardsWithProducts = await Cards.findAll({
 				where: { userId },
-				attributes: ['id', 'quantity'],
+				attributes: ['id', 'quantity', 'createdAt'],
 				include: [
 					{
 						model: Products,
 						as: 'product',
-						attributes: ['id', 'name', 'price'],
+						attributes: ['id', 'name', 'price', 'quantity'],
 						include: [
 							{
 								model: Photo,
@@ -94,6 +94,7 @@ export default {
 				],
 				limit: +limit,
 				offset: +offset,
+				order: [['createdAt', 'DESC']],
 			});
 
 			res.status(200).json({

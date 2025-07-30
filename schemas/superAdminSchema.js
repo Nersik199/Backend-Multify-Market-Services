@@ -28,8 +28,8 @@ export default {
 			longitude: Joi.number().optional(),
 		}).optional(),
 		about: Joi.string().optional(),
-		webSiteUrl: Joi.string().min(10).max(200).optional(),
-		videoUrl: Joi.string().min(10).max(200).optional(),
+		webSiteUrl: Joi.string().optional(),
+		videoUrl: Joi.string().optional(),
 	}),
 
 	removeAdmin: Joi.object({
