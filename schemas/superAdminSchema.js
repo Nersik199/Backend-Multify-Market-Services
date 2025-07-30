@@ -9,8 +9,8 @@ export default {
 			latitude: Joi.number().required(),
 			longitude: Joi.number().required(),
 		}).required(),
-		webSiteUrl: Joi.string().min(10).max(200).required(),
-		videoUrl: Joi.string().min(10).max(200).required(),
+		webSiteUrl: Joi.string().required(),
+		videoUrl: Joi.string().required(),
 		about: Joi.string().required(),
 	}),
 
