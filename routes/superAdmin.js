@@ -63,7 +63,7 @@ router.post(
 	controllers.createCategory
 );
 router.delete(
-	'/delate-category/:categoryId',
+	'/delete-category/:categoryId',
 	checkToken,
 	controllers.delateCategory
 );
