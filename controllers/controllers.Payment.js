@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 
 import yookassa from '../config/yookassaConfig.js';
 import Products from '../models/Products.js';
@@ -134,6 +134,15 @@ export default {
 				});
 			}
 
+			for (const item of products) {
+				const product = await Products.findByPk(item.productId);
+				if (product && product.status !== 'bought') {
+					await Products.update(
+						{ status: 'bought' },
+						{ where: { id: item.productId } }
+					);
+				}
+			}
 			res.status(201).json({ payment });
 		} catch (error) {
 			console.error(error);

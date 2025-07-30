@@ -149,6 +149,7 @@ export default {
 					price: product.price,
 					size: product.size,
 					quantity: product.quantity,
+					status: product.status === 'no_sales' ? product.status : undefined,
 					images: product.productImage
 						? product.productImage.map(image => ({
 								id: image.id,

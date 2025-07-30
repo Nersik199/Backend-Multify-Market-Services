@@ -58,4 +58,17 @@ router.get(
 	validate(adminSchema.getBuyers, 'query'),
 	controllers.getBuyers
 );
+
+router.post(
+	'/product/activate/:productId',
+	checkToken,
+	controllers.archiveProduct
+);
+
+router.get('/archive/list', checkToken, controllers.getArchivedProducts);
+router.put(
+	'/product/deactivate/:productId',
+	checkToken,
+	controllers.restoreArchivedProducts
+);
 export default router;

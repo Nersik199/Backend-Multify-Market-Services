@@ -1042,4 +1042,129 @@ export default {
 			});
 		}
 	},
+
+	archiveProduct: async (req, res) => {
+		try {
+			const { productId } = req.params;
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to archive this product',
+				});
+			}
+
+			const store = await StoreAdmin.findOne({ where: { userId: user.id } });
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			const product = await Products.findOne({ where: { id: productId } });
+
+			if (!product) {
+				return res.status(404).json({
+					message: 'Product not found',
+				});
+			}
+
+			await Products.update(
+				{ status: 'no_sales' },
+				{ where: { id: product.id } }
+			);
+
+			res.status(200).json({
+				message: 'Product archived successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error archiving product',
+			});
+		}
+	},
+
+	getArchivedProducts: async (req, res) => {
+		try {
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to view archived products',
+				});
+			}
+
+			const store = await StoreAdmin.findOne({ where: { userId: user.id } });
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			const archivedProducts = await Products.findAll({
+				where: { storeId: store.storeId, status: 'no_sales' },
+				include: [
+					{
+						model: Photo,
+						as: 'productImage',
+						attributes: ['path', 'id'],
+					},
+				],
+				order: [['id', 'DESC']],
+			});
+
+			if (!archivedProducts.length) {
+				return res.status(404).json({
+					message: 'No archived products found',
+				});
+			}
+
+			res.status(200).json({
+				archivedProducts,
+				message: 'Archived products fetched successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error fetching archived products',
+			});
+		}
+	},
+
+	restoreArchivedProducts: async (req, res) => {
+		try {
+			const { id } = req.user;
+
+			const user = await Users.findByPk(id);
+			if (user.role !== 'admin') {
+				return res.status(401).json({
+					message: 'You are not authorized to refresh products',
+				});
+			}
+
+			const store = await StoreAdmin.findOne({ where: { userId: user.id } });
+			if (!store) {
+				return res.status(404).json({
+					message: 'Store not found',
+				});
+			}
+
+			await Products.update(
+				{ status: 'sale_active' },
+				{ where: { storeId: store.storeId, status: 'no_sales' } }
+			);
+
+			res.status(200).json({
+				message: 'Products refreshed successfully',
+			});
+		} catch (error) {
+			console.log(error);
+			res.status(500).json({
+				message: 'Error refreshing products',
+			});
+		}
+	},
 };

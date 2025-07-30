@@ -34,6 +34,10 @@ Products.init(
 			type: DataTypes.INTEGER.UNSIGNED,
 			allowNull: false,
 		},
+		status: {
+			type: DataTypes.ENUM('bought', 'sale_active', 'no_sales'),
+			defaultValue: 'sale_active',
+		},
 	},
 	{
 		sequelize,
