@@ -25,7 +25,4 @@ router.use('/payment', payment);
 router.use('/notifications', notification);
 router.use('/admin-notification', adminNotification);
 
-router.get('/', (req, res) => {
-	res.render('index');
-});
 export default router;
