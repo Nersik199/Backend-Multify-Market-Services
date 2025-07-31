@@ -1137,7 +1137,7 @@ export default {
 	restoreArchivedProducts: async (req, res) => {
 		try {
 			const { id } = req.user;
-
+			const { productId } = req.params;
 			const user = await Users.findByPk(id);
 			if (user.role !== 'admin') {
 				return res.status(401).json({
@@ -1154,7 +1154,7 @@ export default {
 
 			await Products.update(
 				{ status: 'sale_active' },
-				{ where: { storeId: store.storeId, status: 'no_sales' } }
+				{ where: { id: productId, storeId: store.storeId, status: 'no_sales' } }
 			);
 
 			res.status(200).json({
